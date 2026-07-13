@@ -1,7 +1,11 @@
 [package]
 name = "kivi"
-version = "0.1.0"
+version = "0.0.0-dev"
 edition = "2024"
+description = "A fast, ergonomic CLI for HashiCorp Vault KV v2 secrets"
+license = "MIT"
+repository = "https://github.com/stefanpeknik/kivi"
+rust-version = "1.85"
 
 [[bin]]
 name = "kivi"
