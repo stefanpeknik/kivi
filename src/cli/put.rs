@@ -63,7 +63,7 @@ pub async fn parse_input(args: &PutArgs) -> Result<HashMap<String, Value>, KiviE
         return parse_json(&contents);
     }
     if args.entries.is_empty() {
-        return Err(KiviError::Config(
+        return Err(KiviError::Usage(
             "No key=value pairs provided. Use positional args, --stdin, or --file.".to_string(),
         ));
     }
@@ -71,14 +71,14 @@ pub async fn parse_input(args: &PutArgs) -> Result<HashMap<String, Value>, KiviE
 }
 
 fn parse_json(s: &str) -> Result<HashMap<String, Value>, KiviError> {
-    serde_json::from_str(s).map_err(|e| KiviError::Config(format!("Invalid JSON: {e}")))
+    serde_json::from_str(s).map_err(|e| KiviError::Usage(format!("Invalid JSON: {e}")))
 }
 
 pub fn parse_kv_args(entries: &[String]) -> Result<HashMap<String, Value>, KiviError> {
     let mut map = HashMap::new();
     for entry in entries {
         let (k, v) = entry.split_once('=').ok_or_else(|| {
-            KiviError::Config(format!(
+            KiviError::Usage(format!(
                 "Invalid key=value pair: '{entry}'. Expected format: KEY=value"
             ))
         })?;

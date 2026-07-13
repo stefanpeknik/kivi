@@ -1,6 +1,6 @@
 use crate::cli::OutputArgs;
 use crate::error::KiviError;
-use crate::output::json::TreeNode;
+use crate::output::TreeNode;
 use crate::output::{resolve_value_mode, OutputFormat};
 use crate::vault::client::VaultClient;
 use crate::vault::kv;

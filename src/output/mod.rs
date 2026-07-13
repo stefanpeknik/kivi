@@ -3,7 +3,7 @@ pub mod json;
 
 use clap::ValueEnum;
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default)]
 pub enum OutputFormat {
@@ -42,5 +42,31 @@ pub fn resolve_value_mode(show_values: bool, keys_only: bool) -> ValueMode {
         ValueMode::Revealed
     } else {
         ValueMode::Masked
+    }
+}
+
+#[derive(Default)]
+pub struct TreeNode {
+    pub children: BTreeMap<String, TreeNode>,
+    pub secrets: BTreeMap<String, HashMap<String, Value>>,
+}
+
+impl TreeNode {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn insert_path(&mut self, parts: &[&str], data: Option<HashMap<String, Value>>) {
+        if parts.is_empty() {
+            return;
+        }
+        if parts.len() == 1 {
+            if let Some(d) = data {
+                self.secrets.insert(parts[0].to_string(), d);
+            }
+            return;
+        }
+        let child = self.children.entry(parts[0].to_string()).or_default();
+        child.insert_path(&parts[1..], data);
     }
 }

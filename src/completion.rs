@@ -28,12 +28,16 @@ pub fn complete_vault_path(current: &OsStr) -> Vec<CompletionCandidate> {
 
     let mount = cfg.mount.clone();
 
+    let namespace = std::env::var("VAULT_NAMESPACE")
+        .ok()
+        .filter(|s| !s.is_empty());
+
     let (address, token, mount) = match (address, token, mount) {
         (Some(a), Some(t), Some(m)) => (a, t, m),
         _ => return vec![],
     };
 
-    let client = crate::vault::client::VaultClient::new(&address, &token, None);
+    let client = crate::vault::client::VaultClient::new(&address, &token, namespace.as_deref());
 
     let rt = match tokio::runtime::Runtime::new() {
         Ok(rt) => rt,

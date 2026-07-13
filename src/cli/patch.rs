@@ -36,7 +36,7 @@ pub async fn run(args: &PatchArgs, client: &VaultClient, mount: &str, path: &str
         let mut input = String::new();
         tokio::io::stdin().read_to_string(&mut input).await?;
         let extra: std::collections::HashMap<String, Value> = serde_json::from_str(&input)
-            .map_err(|e| KiviError::Config(format!("Invalid JSON: {e}")))?;
+            .map_err(|e| KiviError::Usage(format!("Invalid JSON: {e}")))?;
         data.extend(extra);
     }
 

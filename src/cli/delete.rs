@@ -53,8 +53,7 @@ async fn run_single(args: &DeleteArgs, client: &VaultClient, mount: &str, path: 
         let confirmed = Confirm::new()
             .with_prompt(format!("{} {}/{}?", action, mount, path))
             .default(false)
-            .interact()
-            .map_err(|e| KiviError::Config(e.to_string()))?;
+            .interact().map_err(|dialoguer::Error::IO(e)| e)?;
         if !confirmed {
             println!("Aborted.");
             return Ok(());
@@ -65,15 +64,18 @@ async fn run_single(args: &DeleteArgs, client: &VaultClient, mount: &str, path: 
             let confirmed = Confirm::new()
                 .with_prompt("This permanently destroys the secret and CANNOT be undone. Are you sure?")
                 .default(false)
-                .interact()
-                .map_err(|e| KiviError::Config(e.to_string()))?;
+                .interact().map_err(|dialoguer::Error::IO(e)| e)?;
             if !confirmed {
                 println!("Aborted.");
                 return Ok(());
             }
         }
-        let meta = kv::read_metadata(client, mount, path).await?;
-        let versions: Vec<u64> = meta.versions.keys().filter_map(|v| v.parse().ok()).collect();
+        let versions = if let Some(ref v) = args.versions {
+            v.clone()
+        } else {
+            let meta = kv::read_metadata(client, mount, path).await?;
+            meta.versions.keys().filter_map(|v| v.parse().ok()).collect()
+        };
         kv::destroy(client, mount, path, &versions).await?;
         println!("Destroyed: {}/{}", mount, path);
     } else if let Some(ref versions) = args.versions {
@@ -113,8 +115,7 @@ async fn run_recursive(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str,
         let confirmed = Confirm::new()
             .with_prompt(format!("{} {} secrets?", action, leaves.len()))
             .default(false)
-            .interact()
-            .map_err(|e| KiviError::Config(e.to_string()))?;
+            .interact().map_err(|dialoguer::Error::IO(e)| e)?;
         if !confirmed {
             println!("Aborted.");
             return Ok(());
@@ -123,8 +124,7 @@ async fn run_recursive(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str,
             let confirmed = Confirm::new()
                 .with_prompt("This PERMANENTLY DESTROYS all versions and CANNOT be undone. Are you absolutely sure?")
                 .default(false)
-                .interact()
-                .map_err(|e| KiviError::Config(e.to_string()))?;
+                .interact().map_err(|dialoguer::Error::IO(e)| e)?;
             if !confirmed {
                 println!("Aborted.");
                 return Ok(());
@@ -132,39 +132,48 @@ async fn run_recursive(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str,
         }
     }
 
-    let mut set: JoinSet<Result<(), KiviError>> = JoinSet::new();
-    for leaf in leaves {
-        let client = Arc::clone(&client);
-        let mount = mount.to_string();
-        let destroy = args.destroy;
-        set.spawn(async move {
-            if destroy {
-                let meta = kv::read_metadata(&client, &mount, &leaf).await?;
-                let versions: Vec<u64> =
-                    meta.versions.keys().filter_map(|v| v.parse().ok()).collect();
-                kv::destroy(&client, &mount, &leaf, &versions).await
-            } else {
-                kv::soft_delete(&client, &mount, &leaf).await
-            }
-        });
-    }
-
+    const MAX_CONCURRENT: usize = 16;
     let mut errors = Vec::new();
-    while let Some(res) = set.join_next().await {
-        match res {
-            Ok(Ok(())) => {}
-            Ok(Err(e)) => errors.push(e.to_string()),
-            Err(e) => errors.push(e.to_string()),
+    let mut remaining = leaves;
+
+    while !remaining.is_empty() {
+        let n = remaining.len().min(MAX_CONCURRENT);
+        let batch: Vec<_> = remaining.drain(..n).collect();
+        let mut set: JoinSet<Result<(), KiviError>> = JoinSet::new();
+
+        for leaf in batch {
+            let client = Arc::clone(&client);
+            let mount = mount.to_string();
+            let destroy = args.destroy;
+            set.spawn(async move {
+                if destroy {
+                    let meta = kv::read_metadata(&client, &mount, &leaf).await?;
+                    let versions: Vec<u64> =
+                        meta.versions.keys().filter_map(|v| v.parse().ok()).collect();
+                    kv::destroy(&client, &mount, &leaf, &versions).await
+                } else {
+                    kv::soft_delete(&client, &mount, &leaf).await
+                }
+            });
+        }
+
+        while let Some(res) = set.join_next().await {
+            match res {
+                Ok(Ok(())) => {}
+                Ok(Err(e)) => errors.push(e.to_string()),
+                Err(e) => errors.push(e.to_string()),
+            }
         }
     }
 
     if errors.is_empty() {
         println!("Done.");
+        Ok(())
     } else {
         eprintln!("Completed with {} error(s):", errors.len());
         for e in &errors {
             eprintln!("  {}", style(e).red());
         }
+        Err(KiviError::Usage(format!("{} deletion(s) failed", errors.len())))
     }
-    Ok(())
 }

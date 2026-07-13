@@ -1,4 +1,4 @@
-use crate::output::{apply_value_mode, ValueMode, MASK};
+use crate::output::{apply_value_mode, TreeNode, ValueMode, MASK};
 use crate::vault::types::{FullMetadataData, SecretData};
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -62,28 +62,3 @@ fn node_to_json(node: &TreeNode, mode: ValueMode) -> Value {
     Value::Object(map)
 }
 
-#[derive(Default)]
-pub struct TreeNode {
-    pub children: std::collections::BTreeMap<String, TreeNode>,
-    pub secrets: std::collections::BTreeMap<String, HashMap<String, Value>>,
-}
-
-impl TreeNode {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn insert_path(&mut self, parts: &[&str], data: Option<HashMap<String, Value>>) {
-        if parts.is_empty() {
-            return;
-        }
-        if parts.len() == 1 {
-            if let Some(d) = data {
-                self.secrets.insert(parts[0].to_string(), d);
-            }
-            return;
-        }
-        let child = self.children.entry(parts[0].to_string()).or_default();
-        child.insert_path(&parts[1..], data);
-    }
-}

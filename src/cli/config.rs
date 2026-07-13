@@ -69,7 +69,7 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
                 && a.default_path.is_none()
                 && a.show_values.is_none()
             {
-                return Err(KiviError::Config(
+                return Err(KiviError::Usage(
                     "No values provided. Use --address, --mount, --default-path, or --show-values."
                         .to_string(),
                 ));
@@ -85,7 +85,7 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
         }
         ConfigCommand::Unset(a) => {
             if !a.address && !a.mount && !a.default_path {
-                return Err(KiviError::Config(
+                return Err(KiviError::Usage(
                     "No values specified. Use --address, --mount, or --default-path.".to_string(),
                 ));
             }

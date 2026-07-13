@@ -44,8 +44,7 @@ pub async fn write(
 ) -> Result<u64, KiviError> {
     let api_path = format!("{}/data/{}", mount, path);
     let body = KvWriteRequest { data, options: cas.map(|c| KvWriteOptions { cas: c }) };
-    let body_val = serde_json::to_value(&body)?;
-    let raw = client.post(&api_path, &body_val).await.map_err(|e| {
+    let raw = client.post(&api_path, &body).await.map_err(|e| {
         // Vault returns HTTP 400 with a message containing "check-and-set" on CAS mismatch.
         // This is the only stable signal available; the Vault API has no structured error code.
         if let KiviError::Api { status: 400, ref message } = e {

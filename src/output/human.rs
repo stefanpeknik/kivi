@@ -1,5 +1,5 @@
 use crate::output::{ValueMode, MASK};
-use crate::output::json::TreeNode;
+use crate::output::TreeNode;
 use crate::vault::types::{FullMetadataData, SecretData};
 use comfy_table::{Attribute, Cell, Color, Table, presets::NOTHING};
 use console::style;

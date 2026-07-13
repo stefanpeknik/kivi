@@ -119,8 +119,7 @@ pub async fn run(
                         mount, path
                     ))
                     .default(false)
-                    .interact()
-                    .map_err(|e| KiviError::Config(e.to_string()))?;
+                    .interact().map_err(|dialoguer::Error::IO(e)| e)?;
                 if !confirmed {
                     println!("Aborted.");
                     return Ok(());

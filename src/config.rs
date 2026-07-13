@@ -38,7 +38,7 @@ impl Config {
             )),
             (Some(p), None) => Ok(p.to_string()),
             (None, Some(d)) => Ok(d.to_string()),
-            (None, None) => Err(KiviError::Config(
+            (None, None) => Err(KiviError::Usage(
                 "No path provided and no default_path configured.\n  \
                  Pass a path argument or run: kivi config set --default-path <path>"
                     .to_string(),

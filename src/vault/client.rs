@@ -1,5 +1,6 @@
 use crate::error::KiviError;
 use reqwest::{Client, Method, StatusCode};
+use serde::Serialize;
 use serde_json::Value;
 use std::time::Duration;
 
@@ -59,7 +60,7 @@ impl VaultClient {
         self.handle_response(resp, path).await
     }
 
-    pub async fn post(&self, path: &str, body: &Value) -> Result<Value, KiviError> {
+    pub async fn post(&self, path: &str, body: &impl Serialize) -> Result<Value, KiviError> {
         let resp = self
             .client
             .post(self.url(path))
@@ -70,15 +71,16 @@ impl VaultClient {
         self.handle_response(resp, path).await
     }
 
-    pub async fn patch(&self, path: &str, body: &Value) -> Result<Value, KiviError> {
-        // .json() must come before the Content-Type override — reqwest's .json() sets
-        // Content-Type: application/json via insert(), so we override it after.
+    pub async fn patch(&self, path: &str, body: &impl Serialize) -> Result<Value, KiviError> {
+        // reqwest's .header() appends — using .json() then .header("Content-Type", ...)
+        // produces duplicate headers. Serialize manually and set Content-Type once.
+        let json_bytes = serde_json::to_vec(body)?;
         let resp = self
             .client
             .patch(self.url(path))
             .header("X-Vault-Token", &self.token)
-            .json(body)
             .header("Content-Type", "application/merge-patch+json")
+            .body(json_bytes)
             .send()
             .await?;
         self.handle_response(resp, path).await

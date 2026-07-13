@@ -178,9 +178,10 @@ async fn resolve_versions(
         Some(f) => f,
         None => {
             if to < 2 {
-                return Err(KiviError::Config(
-                    "No previous version to compare — this secret only has one version.".to_string(),
-                ));
+                return Err(KiviError::Usage(format!(
+                    "Cannot diff: version {} has no predecessor. Use --from to specify a base version.",
+                    to
+                )));
             }
             to - 1
         }
