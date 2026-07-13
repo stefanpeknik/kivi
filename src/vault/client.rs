@@ -128,3 +128,47 @@ impl VaultClient {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn url_basic_construction() {
+        let client = VaultClient::new("https://vault.example.com", "tok", None);
+        assert_eq!(client.url("secret/data/app"), "https://vault.example.com/v1/secret/data/app");
+    }
+
+    #[test]
+    fn url_strips_leading_slash_from_path() {
+        let client = VaultClient::new("https://vault.example.com", "tok", None);
+        assert_eq!(
+            client.url("/secret/data/app"),
+            "https://vault.example.com/v1/secret/data/app"
+        );
+    }
+
+    #[test]
+    fn new_strips_trailing_slash_from_address() {
+        let client = VaultClient::new("https://vault.example.com/", "tok", None);
+        assert_eq!(client.url("secret/data/app"), "https://vault.example.com/v1/secret/data/app");
+    }
+
+    #[test]
+    fn new_strips_multiple_trailing_slashes() {
+        let client = VaultClient::new("https://vault.example.com///", "tok", None);
+        assert_eq!(
+            client.url("secret/data/app"),
+            "https://vault.example.com/v1/secret/data/app"
+        );
+    }
+
+    #[test]
+    fn url_with_query_string() {
+        let client = VaultClient::new("https://vault.example.com", "tok", None);
+        assert_eq!(
+            client.url("secret/data/app?version=3"),
+            "https://vault.example.com/v1/secret/data/app?version=3"
+        );
+    }
+}

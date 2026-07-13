@@ -77,3 +77,94 @@ impl Config {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cfg(default_path: Option<&str>) -> Config {
+        Config {
+            default_path: default_path.map(|s| s.to_string()),
+            ..Config::default()
+        }
+    }
+
+    #[test]
+    fn resolve_path_user_only() {
+        let c = cfg(None);
+        assert_eq!(c.resolve_path(Some("app/db")).unwrap(), "app/db");
+    }
+
+    #[test]
+    fn resolve_path_default_only() {
+        let c = cfg(Some("team/prod"));
+        assert_eq!(c.resolve_path(None).unwrap(), "team/prod");
+    }
+
+    #[test]
+    fn resolve_path_both_joins() {
+        let c = cfg(Some("team/prod"));
+        assert_eq!(c.resolve_path(Some("db")).unwrap(), "team/prod/db");
+    }
+
+    #[test]
+    fn resolve_path_both_trims_slashes() {
+        let c = cfg(Some("team/prod/"));
+        assert_eq!(c.resolve_path(Some("/db")).unwrap(), "team/prod/db");
+    }
+
+    #[test]
+    fn resolve_path_neither_errors() {
+        let c = cfg(None);
+        assert!(c.resolve_path(None).is_err());
+    }
+
+    #[test]
+    fn resolve_path_empty_strings_treated_as_none() {
+        let c = cfg(Some(""));
+        assert!(c.resolve_path(Some("")).is_err());
+    }
+
+    #[test]
+    fn resolve_path_empty_user_uses_default() {
+        let c = cfg(Some("team/prod"));
+        assert_eq!(c.resolve_path(Some("")).unwrap(), "team/prod");
+    }
+
+    #[test]
+    fn resolve_path_empty_default_uses_user() {
+        let c = cfg(Some(""));
+        assert_eq!(c.resolve_path(Some("app/db")).unwrap(), "app/db");
+    }
+
+    #[test]
+    fn default_config_show_values_is_false() {
+        let c = Config::default();
+        assert!(!c.show_values);
+    }
+
+    #[test]
+    fn config_roundtrip_toml() {
+        let c = Config {
+            address: Some("https://vault.example.com".into()),
+            mount: Some("secret".into()),
+            default_path: Some("team/prod".into()),
+            show_values: true,
+        };
+        let serialized = toml::to_string_pretty(&c).unwrap();
+        let deserialized: Config = toml::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.address.as_deref(), Some("https://vault.example.com"));
+        assert_eq!(deserialized.mount.as_deref(), Some("secret"));
+        assert_eq!(deserialized.default_path.as_deref(), Some("team/prod"));
+        assert!(deserialized.show_values);
+    }
+
+    #[test]
+    fn config_toml_omits_none_fields() {
+        let c = Config::default();
+        let serialized = toml::to_string_pretty(&c).unwrap();
+        assert!(!serialized.contains("address"));
+        assert!(!serialized.contains("mount"));
+        assert!(!serialized.contains("default_path"));
+    }
+}

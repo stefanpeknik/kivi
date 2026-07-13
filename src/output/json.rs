@@ -63,3 +63,75 @@ fn node_to_json(node: &TreeNode, mode: ValueMode) -> Value {
     Value::Object(map)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn make_tree() -> TreeNode {
+        let mut tree = TreeNode::new();
+        let mut secret = HashMap::new();
+        secret.insert("user".to_string(), Value::String("admin".into()));
+        secret.insert("pass".to_string(), Value::String("s3cret".into()));
+        tree.insert_path(&["app", "db"], Some(secret));
+
+        let mut api_secret = HashMap::new();
+        api_secret.insert("token".to_string(), Value::String("abc123".into()));
+        tree.insert_path(&["app", "api"], Some(api_secret));
+
+        let mut root_secret = HashMap::new();
+        root_secret.insert("key".to_string(), Value::String("val".into()));
+        tree.insert_path(&["root-cred"], Some(root_secret));
+
+        tree
+    }
+
+    #[test]
+    fn node_to_json_revealed_preserves_values() {
+        let tree = make_tree();
+        let json = node_to_json(&tree, ValueMode::Revealed);
+        assert_eq!(json["app"]["db"]["user"], "admin");
+        assert_eq!(json["app"]["db"]["pass"], "s3cret");
+        assert_eq!(json["app"]["api"]["token"], "abc123");
+        assert_eq!(json["root-cred"]["key"], "val");
+    }
+
+    #[test]
+    fn node_to_json_masked_hides_values() {
+        let tree = make_tree();
+        let json = node_to_json(&tree, ValueMode::Masked);
+        assert_eq!(json["app"]["db"]["user"], MASK);
+        assert_eq!(json["app"]["db"]["pass"], MASK);
+        assert_eq!(json["root-cred"]["key"], MASK);
+    }
+
+    #[test]
+    fn node_to_json_keys_only_returns_key_arrays() {
+        let tree = make_tree();
+        let json = node_to_json(&tree, ValueMode::KeysOnly);
+
+        let db_keys = json["app"]["db"].as_array().unwrap();
+        let key_strings: Vec<&str> = db_keys.iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(key_strings.contains(&"user"));
+        assert!(key_strings.contains(&"pass"));
+
+        let api_keys = json["app"]["api"].as_array().unwrap();
+        assert_eq!(api_keys.len(), 1);
+    }
+
+    #[test]
+    fn node_to_json_empty_tree() {
+        let tree = TreeNode::new();
+        let json = node_to_json(&tree, ValueMode::Revealed);
+        assert_eq!(json, Value::Object(serde_json::Map::new()));
+    }
+
+    #[test]
+    fn node_to_json_nested_structure_is_object() {
+        let tree = make_tree();
+        let json = node_to_json(&tree, ValueMode::Revealed);
+        assert!(json["app"].is_object());
+        assert!(json["app"]["db"].is_object());
+    }
+}
+

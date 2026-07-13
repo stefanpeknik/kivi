@@ -86,3 +86,73 @@ pub fn parse_kv_args(entries: &[String]) -> Result<HashMap<String, Value>, KiviE
     }
     Ok(map)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_kv_basic() {
+        let entries = vec!["HOST=localhost".to_string()];
+        let result = parse_kv_args(&entries).unwrap();
+        assert_eq!(result["HOST"], Value::String("localhost".into()));
+    }
+
+    #[test]
+    fn parse_kv_multiple_pairs() {
+        let entries = vec![
+            "HOST=localhost".to_string(),
+            "PORT=5432".to_string(),
+            "DB=mydb".to_string(),
+        ];
+        let result = parse_kv_args(&entries).unwrap();
+        assert_eq!(result.len(), 3);
+        assert_eq!(result["PORT"], Value::String("5432".into()));
+    }
+
+    #[test]
+    fn parse_kv_value_containing_equals() {
+        let entries = vec!["CONN=host=db;port=5432".to_string()];
+        let result = parse_kv_args(&entries).unwrap();
+        assert_eq!(result["CONN"], Value::String("host=db;port=5432".into()));
+    }
+
+    #[test]
+    fn parse_kv_empty_value() {
+        let entries = vec!["KEY=".to_string()];
+        let result = parse_kv_args(&entries).unwrap();
+        assert_eq!(result["KEY"], Value::String("".into()));
+    }
+
+    #[test]
+    fn parse_kv_empty_entries() {
+        let result = parse_kv_args(&[]).unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn parse_kv_missing_equals_is_error() {
+        let entries = vec!["NOEQUALS".to_string()];
+        assert!(parse_kv_args(&entries).is_err());
+    }
+
+    #[test]
+    fn parse_kv_later_entry_overwrites_earlier() {
+        let entries = vec!["KEY=first".to_string(), "KEY=second".to_string()];
+        let result = parse_kv_args(&entries).unwrap();
+        assert_eq!(result["KEY"], Value::String("second".into()));
+    }
+
+    #[test]
+    fn parse_kv_all_values_are_strings() {
+        let entries = vec![
+            "NUM=42".to_string(),
+            "BOOL=true".to_string(),
+            "NULL=null".to_string(),
+        ];
+        let result = parse_kv_args(&entries).unwrap();
+        assert!(result["NUM"].is_string());
+        assert!(result["BOOL"].is_string());
+        assert!(result["NULL"].is_string());
+    }
+}
