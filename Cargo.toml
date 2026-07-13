@@ -1,0 +1,26 @@
+[package]
+name = "kivi"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "kivi"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+clap_complete = { version = "4", features = ["unstable-dynamic"] }
+reqwest = { version = "0.12", features = ["json", "native-tls"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+toml = "0.8"
+dialoguer = "0.11"
+console = "0.15"
+comfy-table = "7"
+ptree = "0.4"
+similar = { version = "2", features = ["inline"] }
+tempfile = "3"
+anyhow = "1"
+thiserror = "2"
+dirs = "6"

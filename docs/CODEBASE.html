@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kivi — Codebase Reference</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/toml.min.js"></script>
+<script>hljs.highlightAll();</script>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --orange: #e3b341; --purple: #bc8cff;
+    --sidebar-w: 280px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.7; display: flex; }
+
+  /* Sidebar */
+  nav {
+    width: var(--sidebar-w); min-width: var(--sidebar-w);
+    height: 100vh; position: sticky; top: 0;
+    background: var(--surface); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 20px 0;
+    font-size: 13px;
+  }
+  nav .logo { padding: 0 20px 16px; font-size: 18px; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  nav a { display: block; padding: 5px 20px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(88,166,255,.08); }
+  nav .section { padding: 10px 20px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  nav a.sub { padding-left: 32px; font-size: 12.5px; }
+
+  /* Main */
+  main { flex: 1; max-width: 900px; padding: 40px 48px; overflow-x: hidden; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 22px; font-weight: 700; margin: 48px 0 16px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--accent); }
+  h3 { font-size: 17px; font-weight: 600; margin: 32px 0 12px; color: var(--orange); }
+  h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--green); text-transform: uppercase; letter-spacing: .06em; }
+  p { margin-bottom: 14px; color: #cdd9e5; }
+  ul, ol { padding-left: 24px; margin-bottom: 14px; color: #cdd9e5; }
+  li { margin-bottom: 5px; }
+  strong { color: var(--text); }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; background: var(--surface); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; color: var(--orange); }
+  pre { margin: 16px 0; border-radius: 8px; border: 1px solid var(--border); overflow-x: auto; }
+  pre code { border: none; padding: 0; background: transparent; color: inherit; font-size: 13px; }
+
+  /* Callout boxes */
+  .note, .warn, .tip, .key {
+    border-radius: 6px; padding: 14px 16px; margin: 20px 0;
+    border-left: 4px solid; font-size: 14px;
+  }
+  .note  { background: rgba(88,166,255,.08); border-color: var(--accent); }
+  .warn  { background: rgba(248,81,73,.08);  border-color: var(--red); }
+  .tip   { background: rgba(63,185,80,.08);  border-color: var(--green); }
+  .key   { background: rgba(188,140,255,.08);border-color: var(--purple); }
+  .note::before { content: "ℹ️  "; }
+  .warn::before { content: "⚠️  "; }
+  .tip::before  { content: "✅  "; }
+  .key::before  { content: "🔑  "; }
+
+  /* Module tree */
+  .tree { font-family: monospace; font-size: 13px; line-height: 1.8; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; color: #cdd9e5; }
+  .tree .dir { color: var(--accent); font-weight: 600; }
+  .tree .file { color: var(--muted); }
+  .tree .desc { color: #cdd9e5; font-family: sans-serif; font-size: 12px; margin-left: 8px; }
+
+  /* Tag badges */
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; margin-right: 4px; }
+  .badge.crate  { background: rgba(88,166,255,.2); color: var(--accent); }
+  .badge.macro  { background: rgba(188,140,255,.2); color: var(--purple); }
+  .badge.trait  { background: rgba(63,185,80,.2); color: var(--green); }
+  .badge.concept{ background: rgba(227,179,65,.2); color: var(--orange); }
+
+  /* Comparison table */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  th { background: var(--surface); padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: #cdd9e5; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+
+  /* Scrollspy */
+  .anchor { display: block; position: relative; top: -80px; visibility: hidden; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="logo">kivi</div>
+
+  <div class="section">Overview</div>
+  <a href="#arch">Architecture</a>
+  <a href="#modules">Module tree</a>
+
+  <div class="section">Rust Concepts</div>
+  <a href="#ownership">Ownership &amp; borrowing</a>
+  <a href="#arc">Arc — shared ownership</a>
+  <a href="#result">Result &amp; ? operator</a>
+  <a href="#async">Async / await</a>
+  <a href="#pattern">Pattern matching</a>
+  <a href="#impl-trait">impl Trait</a>
+  <a href="#lifetimes">Lifetimes (implicit)</a>
+
+  <div class="section">Macros &amp; Derives</div>
+  <a href="#tokio-main">#[tokio::main]</a>
+  <a href="#clap-macros">clap derive macros</a>
+  <a href="#serde-macros">serde derive macros</a>
+  <a href="#thiserror">thiserror</a>
+  <a href="#allow">allow / dead_code</a>
+
+  <div class="section">Crates</div>
+  <a href="#crate-clap">clap</a>
+  <a href="#crate-tokio">tokio</a>
+  <a href="#crate-reqwest">reqwest</a>
+  <a href="#crate-serde">serde</a>
+  <a href="#crate-thiserror">thiserror</a>
+  <a href="#crate-console">console</a>
+  <a href="#crate-comfy">comfy-table</a>
+  <a href="#crate-ptree">ptree</a>
+  <a href="#crate-tempfile">tempfile</a>
+  <a href="#crate-dialoguer">dialoguer</a>
+  <a href="#crate-dirs">dirs</a>
+  <a href="#crate-toml">toml</a>
+
+  <div class="section">Design Decisions</div>
+  <a href="#d-vaultargs">VaultArgs flattening</a>
+  <a href="#d-extractors">vault_args_for pattern</a>
+  <a href="#d-arc-asymmetry">Arc asymmetry</a>
+  <a href="#d-joinset">JoinSet concurrency</a>
+  <a href="#d-editor">editor.rs ownership</a>
+  <a href="#d-error">KiviError design</a>
+  <a href="#d-output">Output dual-mode</a>
+
+  <div class="section">File Walkthroughs</div>
+  <a href="#f-main">main.rs</a>
+  <a href="#f-error">error.rs</a>
+  <a href="#f-config">config.rs</a>
+  <a href="#f-client">vault/client.rs</a>
+  <a href="#f-kv">vault/kv.rs</a>
+  <a href="#f-editor">editor.rs</a>
+  <a href="#f-completion">completion.rs</a>
+  <a href="#f-output">output/</a>
+</nav>
+
+<main>
+
+<h1>kivi — Codebase Reference</h1>
+<p>A deep-dive into every Rust concept, macro, crate, and design decision in kivi — a HashiCorp Vault KVv2 CLI written in Rust.</p>
+
+<!-- ───────── ARCHITECTURE ───────── -->
+<span class="anchor" id="arch"></span>
+<h2>Architecture Overview</h2>
+
+<p>kivi has three clear layers with one-way dependencies:</p>
+
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px;margin:16px 0;font-size:14px;">
+<strong style="color:var(--accent)">CLI layer</strong> (<code>src/cli/</code>) — parses arguments, handles flags, calls the business layer<br>
+&emsp;↓ calls<br>
+<strong style="color:var(--orange)">Business layer</strong> (<code>src/editor.rs</code>, <code>src/completion.rs</code>) — multi-step workflows<br>
+&emsp;↓ calls<br>
+<strong style="color:var(--green)">Vault API layer</strong> (<code>src/vault/</code>) — pure HTTP operations against the Vault API<br>
+&emsp;↓ formats via<br>
+<strong style="color:var(--purple)">Output layer</strong> (<code>src/output/</code>) — human (ptree + comfy-table) or JSON
+</div>
+
+<p><code>src/main.rs</code> is the entry point. It resolves config + auth, constructs a <code>VaultClient</code>, then dispatches to the CLI layer. It knows about all layers but only to wire them — it contains no business logic itself.</p>
+
+<!-- ───────── MODULE TREE ───────── -->
+<span class="anchor" id="modules"></span>
+<h2>Module Tree</h2>
+
+<div class="tree">
+<span class="dir">kivi/src/</span><br>
+├── <span class="file">main.rs</span>     <span class="desc">Entry point, config resolution, command dispatch</span><br>
+├── <span class="file">error.rs</span>    <span class="desc">KiviError enum — all error variants for the whole app</span><br>
+├── <span class="file">config.rs</span>   <span class="desc">Config struct, TOML load/save, XDG path, auto-create</span><br>
+├── <span class="file">editor.rs</span>   <span class="desc">Full edit workflow — open $EDITOR, CAS write, conflict loop</span><br>
+├── <span class="file">completion.rs</span><span class="desc">Dynamic path completion with 10-second timeout</span><br>
+├── <span class="dir">cli/</span><br>
+│   ├── <span class="file">mod.rs</span>      <span class="desc">Cli, Commands enum, shared VaultArgs &amp; OutputArgs structs</span><br>
+│   ├── <span class="file">get.rs</span>      <span class="desc">kivi get — single secret read</span><br>
+│   ├── <span class="file">list.rs</span>     <span class="desc">kivi list — directory listing, --long concurrent metadata</span><br>
+│   ├── <span class="file">tree.rs</span>     <span class="desc">kivi tree — concurrent BFS + leaf secret fetches</span><br>
+│   ├── <span class="file">put.rs</span>      <span class="desc">kivi put — full overwrite, key=val parsing, JSON file/stdin</span><br>
+│   ├── <span class="file">patch.rs</span>    <span class="desc">kivi patch — merge write, RFC 7396</span><br>
+│   ├── <span class="file">edit.rs</span>     <span class="desc">kivi edit — thin adapter over editor.rs</span><br>
+│   ├── <span class="file">delete.rs</span>   <span class="desc">kivi delete — single + recursive, concurrent deletes</span><br>
+│   ├── <span class="file">undelete.rs</span> <span class="desc">kivi undelete — restore soft-deleted versions</span><br>
+│   ├── <span class="file">metadata.rs</span> <span class="desc">kivi metadata show/set/delete</span><br>
+│   └── <span class="file">config.rs</span>   <span class="desc">kivi config show/set/path</span><br>
+├── <span class="dir">vault/</span><br>
+│   ├── <span class="file">client.rs</span>   <span class="desc">VaultClient — reqwest wrapper, all HTTP verbs including LIST</span><br>
+│   ├── <span class="file">kv.rs</span>       <span class="desc">All KVv2 API operations + concurrent list_recursive</span><br>
+│   └── <span class="file">types.rs</span>    <span class="desc">serde types for Vault API request/response shapes</span><br>
+└── <span class="dir">output/</span><br>
+    ├── <span class="file">mod.rs</span>      <span class="desc">OutputFormat enum, ValueMode enum, shared masking logic</span><br>
+    ├── <span class="file">human.rs</span>    <span class="desc">comfy-table + ptree rendering for terminal output</span><br>
+    └── <span class="file">json.rs</span>     <span class="desc">JSON serialization, TreeNode struct</span>
+</div>
+
+<!-- ───────── OWNERSHIP ───────── -->
+<span class="anchor" id="ownership"></span>
+<h2>Ownership &amp; Borrowing</h2>
+
+<p>Rust's ownership system is the foundation. Every value has exactly one owner; when the owner goes out of scope, the value is dropped (memory freed). You can either <em>move</em> a value (transfer ownership) or <em>borrow</em> it (take a reference, <code>&amp;T</code> or <code>&amp;mut T</code>).</p>
+
+<pre><code class="language-rust">// Move: VaultClient is moved INTO the Arc, you can't use it after
+let raw = VaultClient::new(...);       // raw: VaultClient
+let client = Arc::new(raw);           // raw is moved; use client instead
+
+// Borrow: the function gets a reference, caller keeps ownership
+async fn read(client: &amp;VaultClient, ...) { ... }
+read(&amp;client, ...).await;              // &amp;client = borrow, client still owned here</code></pre>
+
+<p>The compiler enforces that you can't use a moved value, that borrows don't outlive their owner, and that you can't have a mutable borrow while any other borrow exists. <strong>This is what prevents data races and use-after-free at compile time</strong> — no runtime GC needed.</p>
+
+<span class="anchor" id="arc"></span>
+<h2>Arc — Shared Ownership Across Async Tasks</h2>
+
+<span class="badge crate">std::sync</span><span class="badge concept">Thread safety</span>
+
+<p><code>Arc&lt;T&gt;</code> (Atomically Reference Counted) allows multiple owners of the same value. Every <code>Arc::clone</code> increments an atomic counter; when the last clone is dropped, the counter hits zero and the value is freed.</p>
+
+<pre><code class="language-rust">let client = Arc::new(VaultClient::new(...));   // ref count = 1
+
+// Spawn two concurrent tasks — each needs the client
+let c1 = Arc::clone(&amp;client);   // ref count = 2
+let c2 = Arc::clone(&amp;client);   // ref count = 3
+
+set.spawn(async move { use_client(c1).await });  // moves c1 into task
+set.spawn(async move { use_client(c2).await });  // moves c2 into task
+// ref count drops to 1 when tasks finish; to 0 when client drops</code></pre>
+
+<div class="key">
+Why not just pass <code>&amp;VaultClient</code> to spawned tasks? Tokio requires spawned futures to be <code>'static</code> — they must not hold references that could become dangling if the calling scope ends before the task. <code>Arc&lt;VaultClient&gt;</code> is <code>'static</code> because it owns its data. A <code>&amp;VaultClient</code> borrows from the caller's stack frame, which could be gone.
+</div>
+
+<p>In kivi, commands that spawn concurrent tasks (<code>list --long</code>, <code>tree</code>, <code>delete --recursive</code>) take <code>Arc&lt;VaultClient&gt;</code>. Sequential commands take <code>&amp;VaultClient</code> — a deref coercion automatically converts <code>&amp;Arc&lt;VaultClient&gt;</code> → <code>&amp;VaultClient</code> at call sites.</p>
+
+<span class="anchor" id="result"></span>
+<h2>Result&lt;T, E&gt; and the ? Operator</h2>
+
+<span class="badge concept">Error handling</span>
+
+<p>Rust has no exceptions. Fallible operations return <code>Result&lt;T, E&gt;</code> — either <code>Ok(value)</code> on success or <code>Err(e)</code> on failure.</p>
+
+<pre><code class="language-rust">pub async fn read(...) -> Result&lt;SecretData, KiviError&gt; {
+    let raw = client.get(&amp;api_path).await?;   // ? here
+    let resp: KvReadResponse = serde_json::from_value(raw)?;  // ? here too
+    Ok(SecretData { data: resp.data.data, ... })
+}</code></pre>
+
+<p>The <code>?</code> operator is syntactic sugar for:</p>
+
+<pre><code class="language-rust">match client.get(&amp;api_path).await {
+    Ok(v) => v,
+    Err(e) => return Err(e.into()),   // .into() converts to the function's error type
+}</code></pre>
+
+<p>The <code>.into()</code> matters — it allows automatic conversion from one error type to another if a <code>From</code> implementation exists. In <code>error.rs</code>:</p>
+
+<pre><code class="language-rust">#[error("HTTP error: {0}")]
+Http(#[from] reqwest::Error),   // generates: impl From&lt;reqwest::Error&gt; for KiviError</code></pre>
+
+<p>So anywhere we <code>?</code> a <code>reqwest::Error</code> inside a function returning <code>Result&lt;_, KiviError&gt;</code>, the conversion is automatic.</p>
+
+<span class="anchor" id="async"></span>
+<h2>Async / Await and Tokio</h2>
+
+<span class="badge crate">tokio</span><span class="badge concept">Concurrency</span>
+
+<p>Rust's <code>async fn</code> syntax returns a <code>Future</code> — a value representing a computation that hasn't run yet. Futures are <em>lazy</em>: nothing executes until you <code>.await</code> them or spawn them onto an executor.</p>
+
+<pre><code class="language-rust">// This returns a Future immediately — no code in read() has run yet
+let fut = kv::read(&amp;client, mount, path, None);
+
+// NOW it runs, suspending at each .await point if I/O is pending
+let secret = fut.await?;</code></pre>
+
+<p>tokio is the async runtime — it runs futures on a thread pool. <code>#[tokio::main]</code> wraps <code>main()</code> to start the runtime:</p>
+
+<pre><code class="language-rust">#[tokio::main]
+async fn main() {
+    // this body runs inside a tokio runtime
+}</code></pre>
+
+<p>This macro expands to roughly:</p>
+
+<pre><code class="language-rust">fn main() {
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async { /* your async main body */ });
+}</code></pre>
+
+<div class="note">Key insight: <code>async fn</code> functions return <code>impl Future&lt;Output = T&gt;</code>. Calling an async function doesn't execute it — it returns a future. Only <code>.await</code> (or <code>spawn</code>) actually runs it. This is why forgetting <code>.await</code> is a silent bug the compiler warns about.</div>
+
+<p><strong>JoinSet</strong> — tokio's way to run N futures concurrently and collect results:</p>
+
+<pre><code class="language-rust">let mut set: JoinSet&lt;Result&lt;(String, SecretData), KiviError&gt;&gt; = JoinSet::new();
+
+for path in paths {
+    let client = Arc::clone(&amp;client);
+    set.spawn(async move {              // spawn moves captured vars into the task
+        let secret = kv::read(&amp;client, mount, &amp;path, None).await?;
+        Ok((path, secret))
+    });
+}
+
+while let Some(result) = set.join_next().await {   // collects one result at a time
+    let (path, secret) = result??;   // outer ? = JoinError (task panicked), inner ? = KiviError
+}</code></pre>
+
+<span class="anchor" id="pattern"></span>
+<h2>Pattern Matching</h2>
+
+<span class="badge concept">Exhaustiveness</span>
+
+<p>Rust's <code>match</code> is exhaustive — the compiler rejects code that doesn't handle every case. This is load-bearing in kivi's dispatch in <code>main.rs</code>:</p>
+
+<pre><code class="language-rust">match &amp;cli.command {
+    Commands::Get(args)      => cli::get::run(args, ...).await?,
+    Commands::List(args)     => cli::list::run(args, ...).await?,
+    Commands::Tree(args)     => cli::tree::run(args, ...).await?,
+    Commands::Put(args)      => cli::put::run(args, ...).await?,
+    // ... every variant must be handled ...
+    Commands::Config(_) | Commands::Completion(_) | Commands::Complete(_) => unreachable!(),
+}</code></pre>
+
+<p>If you add a new command variant and forget to add it here, the code <strong>doesn't compile</strong>. No runtime "unhandled case" bugs.</p>
+
+<p><code>if let</code> is pattern matching for a single case:</p>
+
+<pre><code class="language-rust">// Only runs if cli.command is the Complete variant, binding args
+if let Commands::Complete(args) = &amp;cli.command { ... }
+
+// Only runs if meta.deletion_time is Some, binding the inner value
+if let Some(t) = &amp;meta.deletion_time { println!("{t}"); }</code></pre>
+
+<span class="anchor" id="impl-trait"></span>
+<h2>impl Trait — Abstract Type Parameters</h2>
+
+<span class="badge concept">Generics</span>
+
+<pre><code class="language-rust">pub fn new(
+    address: impl Into&lt;String&gt;,
+    token: impl Into&lt;String&gt;,
+    namespace: Option&lt;&amp;str&gt;,
+) -> Self { ... }</code></pre>
+
+<p><code>impl Into&lt;String&gt;</code> means "any type that can be converted into a String". This lets callers pass <code>&amp;str</code>, <code>String</code>, or anything else implementing <code>Into&lt;String&gt;</code>. Without it, you'd have to write <code>address: &amp;str</code> and force callers to pass string slices, or <code>address: String</code> and force them to allocate.</p>
+
+<p>This is syntactic sugar for a generic type parameter: <code>fn new&lt;A: Into&lt;String&gt;, T: Into&lt;String&gt;&gt;(address: A, token: T)</code> — just more readable.</p>
+
+<span class="anchor" id="lifetimes"></span>
+<h2>Lifetimes (Implicit)</h2>
+
+<span class="badge concept">Memory safety</span>
+
+<p>Lifetimes appear explicitly only when the compiler can't figure them out. In kivi they're mostly hidden by lifetime elision rules. But they're real and enforced.</p>
+
+<pre><code class="language-rust">fn vault_args_for(cmd: &amp;Commands) -> &amp;VaultArgs {
+//                     ^ borrow     ^ borrow returned
+// Lifetime elision fills in: &amp;'a Commands -> &amp;'a VaultArgs
+// The returned reference can't outlive the Commands it came from
+}</code></pre>
+
+<p>The compiler enforces that you can't call <code>vault_args_for(&amp;cli.command)</code> and then drop <code>cli</code> while still using the returned reference. If you tried, it would refuse to compile.</p>
+
+<!-- ───────── MACROS ───────── -->
+<span class="anchor" id="tokio-main"></span>
+<h2>#[tokio::main]</h2>
+
+<span class="badge macro">proc-macro</span><span class="badge crate">tokio</span>
+
+<p>A procedural macro (proc-macro) that transforms the annotated <code>async fn main()</code> into a synchronous <code>fn main()</code> that starts a tokio runtime and runs the async body on it. Without this macro, you'd need to manually create and block on a runtime.</p>
+
+<span class="anchor" id="clap-macros"></span>
+<h2>clap Derive Macros</h2>
+
+<span class="badge macro">proc-macro</span><span class="badge crate">clap</span>
+
+<p>clap's derive macros turn structs and enums into CLI parsers by reading attributes at compile time. No hand-written argument parsing code needed.</p>
+
+<h3>The three core derives</h3>
+
+<pre><code class="language-rust">#[derive(Parser)]   // Top-level CLI struct — generates the main parser
+pub struct Cli { ... }
+
+#[derive(Subcommand)] // Enum of subcommands
+pub enum Commands { ... }
+
+#[derive(Args)]       // Argument group — can be reused across commands via flatten
+pub struct VaultArgs { ... }</code></pre>
+
+<h3>#[command(...)] — struct/variant attributes</h3>
+
+<pre><code class="language-rust">#[command(name = "kivi", about = "HashiCorp Vault KV secret manager", version)]
+pub struct Cli { ... }
+// Generates: kivi --help shows "HashiCorp Vault KV secret manager", --version works
+
+#[command(alias = "ls")]
+List(list::ListArgs),
+// Generates: `kivi ls` works as an alias for `kivi list`
+
+#[command(hide = true)]
+Complete(CompleteArgs),
+// Hides this subcommand from --help output</code></pre>
+
+<h3>#[arg(...)] — field attributes</h3>
+
+<pre><code class="language-rust">#[arg(short = 'a', long, env = "VAULT_ADDR")]
+pub address: Option&lt;String&gt;,
+// short = 'a'      → -a flag
+// long             → --address flag (derived from field name)
+// env = "VAULT_ADDR" → also accepts $VAULT_ADDR environment variable
+// Option&lt;String&gt;  → argument is optional; None if not provided
+
+#[arg(long, env = "VAULT_TOKEN", hide_env_values = true)]
+pub token: Option&lt;String&gt;,
+// hide_env_values → VAULT_TOKEN value is shown as [VAULT_TOKEN] in --help, never the actual value
+
+#[arg(value_enum, default_value = "human")]
+pub output: OutputFormat,
+// value_enum → generates tab-completion and validation from the enum's variants
+// default_value → if flag not provided, use this
+
+#[arg(long, required = true, value_delimiter = ',')]
+pub versions: Vec&lt;u64&gt;,
+// required = true    → must be provided (even though Vec could be empty)
+// value_delimiter    → --versions 1,2,3 is parsed as vec![1, 2, 3]</code></pre>
+
+<h3>#[command(flatten)] — composing argument groups</h3>
+
+<pre><code class="language-rust">#[derive(Args)]
+pub struct VaultArgs {
+    pub address: Option&lt;String&gt;,
+    pub token: Option&lt;String&gt;,
+    pub mount: Option&lt;String&gt;,
+    pub namespace: Option&lt;String&gt;,
+}
+
+#[derive(Args)]
+pub struct GetArgs {
+    pub path: String,
+    #[command(flatten)]   // VaultArgs fields appear as if defined directly on GetArgs
+    pub vault: VaultArgs,
+}
+// Result: `kivi get path/to/secret --address ... --token ... --mount ...`</code></pre>
+
+<p>Flattening is how kivi avoids global flags — each command owns exactly the flags it needs. <code>config</code> and <code>completion</code> have no <code>VaultArgs</code> flattened in, so they show no vault connection flags in their help.</p>
+
+<span class="anchor" id="serde-macros"></span>
+<h2>serde Derive Macros</h2>
+
+<span class="badge macro">proc-macro</span><span class="badge crate">serde</span>
+
+<pre><code class="language-rust">#[derive(Deserialize, Serialize)]
+#[serde(default)]
+pub struct Config {
+    pub address: String,
+    pub mount: String,
+    ...
+}</code></pre>
+
+<ul>
+  <li><code>Deserialize</code> — generates code to parse TOML/JSON into this struct. <code>serde::from_str::&lt;Config&gt;(toml_string)</code> works.</li>
+  <li><code>Serialize</code> — generates code to turn this struct into TOML/JSON. <code>toml::to_string_pretty(&amp;config)</code> works.</li>
+  <li><code>#[serde(default)]</code> — if a field is missing in the source data, use its <code>Default::default()</code> value instead of failing. This is what makes kivi's config forward-compatible: adding a new field with a default won't break existing config files.</li>
+</ul>
+
+<p>For Vault API response types in <code>vault/types.rs</code>, only <code>Deserialize</code> is needed — we never serialize them back to JSON ourselves.</p>
+
+<span class="anchor" id="thiserror"></span>
+<h2>thiserror</h2>
+
+<span class="badge macro">proc-macro</span><span class="badge crate">thiserror</span>
+
+<pre><code class="language-rust">#[derive(thiserror::Error, Debug)]
+pub enum KiviError {
+    #[error("VAULT_TOKEN is not set...")]
+    NoToken,
+
+    #[error("Permission denied at path: {path}")]
+    Forbidden { path: String },
+
+    #[error("HTTP error: {0}")]
+    Http(#[from] reqwest::Error),
+}</code></pre>
+
+<p><code>#[derive(Error)]</code> generates an <code>impl std::error::Error for KiviError</code>. The <code>#[error("...")]</code> attribute generates the <code>Display</code> implementation — what gets printed when you use <code>{}</code> on an error. Field references in the message string:</p>
+
+<ul>
+  <li><code>{path}</code> → named field on the variant</li>
+  <li><code>{0}</code> → first unnamed (tuple) field</li>
+</ul>
+
+<p><code>#[from]</code> generates <code>impl From&lt;reqwest::Error&gt; for KiviError</code>, enabling the <code>?</code> operator to auto-convert <code>reqwest::Error</code> into <code>KiviError::Http(...)</code>.</p>
+
+<span class="anchor" id="allow"></span>
+<h2>#[allow(...)] and Dead Code</h2>
+
+<span class="badge macro">lint attribute</span>
+
+<pre><code class="language-rust">#[allow(dead_code)]
+#[error("Vault mount '{mount}' is a KVv1 engine. kivi requires KVv2.")]
+KvV1Engine { mount: String },</code></pre>
+
+<p><code>#[allow(dead_code)]</code> suppresses the compiler warning that this variant is never constructed. It's kept because: (a) the error type is part of the public contract — callers should handle it even if kivi doesn't yet construct it, and (b) KVv1 detection will be added later. Documenting intent via the suppression attribute is better than deleting the variant and losing context.</p>
+
+<!-- ───────── CRATES ───────── -->
+<span class="anchor" id="crate-clap"></span>
+<h2>clap</h2>
+
+<span class="badge crate">clap 4</span><span class="badge crate">clap_complete</span>
+
+<p>The CLI framework. Two crates used:</p>
+<ul>
+  <li><code>clap</code> — argument parsing, subcommands, help generation, shell completions framework</li>
+  <li><code>clap_complete</code> — generates static completion scripts (the <code>kivi completion zsh</code> command)</li>
+</ul>
+
+<p>For dynamic path completions (fetching live Vault paths), clap alone isn't enough — that's handled by a hidden <code>__complete</code> subcommand and a custom shell function that calls it.</p>
+
+<span class="anchor" id="crate-tokio"></span>
+<h2>tokio</h2>
+
+<span class="badge crate">tokio 1</span>
+
+<p>The async runtime. Used features:</p>
+
+<table>
+<tr><th>Feature</th><th>What it provides in kivi</th></tr>
+<tr><td><code>tokio::task::JoinSet</code></td><td>Bounded concurrent task fan-out (tree, delete, list --long)</td></tr>
+<tr><td><code>tokio::time::timeout</code></td><td>10-second hard limit on completion API calls</td></tr>
+<tr><td><code>tokio::process::Command</code></td><td>Non-blocking editor launch (doesn't stall the runtime)</td></tr>
+<tr><td><code>tokio::fs</code></td><td>Non-blocking temp file reads/writes in editor workflow</td></tr>
+<tr><td><code>tokio::io::AsyncReadExt</code></td><td>Non-blocking stdin reading in put/patch</td></tr>
+</table>
+
+<div class="warn">Calling <code>std::process::Command::status()</code> (blocking) inside an <code>async fn</code> stalls one of tokio's worker threads for the duration. For a CLI that only ever has one editor open at a time, this is technically survivable — but the correct form is <code>tokio::process::Command</code> which yields the thread back to the runtime while waiting.</div>
+
+<span class="anchor" id="crate-reqwest"></span>
+<h2>reqwest</h2>
+
+<span class="badge crate">reqwest 0.12</span>
+
+<p>The HTTP client. Uses <code>native-tls</code> (OpenSSL on Linux) rather than rustls, so it picks up system CA certificates — crucial for corporate Vault deployments with internal CAs.</p>
+
+<p>Key pattern — the custom LIST method that Vault's API requires:</p>
+
+<pre><code class="language-rust">self.client
+    .request(Method::from_bytes(b"LIST").unwrap(), self.url(path))
+    .header("X-Vault-Token", &amp;self.token)
+    .send()
+    .await?</code></pre>
+
+<p>HTTP <code>LIST</code> is a custom verb not in the standard HTTP spec but used by Vault for directory listings. reqwest allows arbitrary method bytes via <code>Method::from_bytes</code>.</p>
+
+<p>The PATCH content-type ordering matters:</p>
+
+<pre><code class="language-rust">.json(body)                                          // sets Content-Type: application/json
+.header("Content-Type", "application/merge-patch+json")  // OVERRIDES it (insert replaces)
+</code></pre>
+
+<p>If you reversed these, <code>.json()</code> would overwrite the header and Vault would return HTTP 415.</p>
+
+<span class="anchor" id="crate-serde"></span>
+<h2>serde + serde_json</h2>
+
+<span class="badge crate">serde 1</span>
+
+<p>Serde is a serialization framework; <code>serde_json</code> is its JSON backend. The <code>json!()</code> macro builds JSON values at compile time:</p>
+
+<pre><code class="language-rust">let body = json!({
+    "data": data,
+    "options": { "cas": version }
+});
+// Equivalent to building a serde_json::Value::Object by hand, but readable</code></pre>
+
+<p>For Vault types, all structs derive <code>Deserialize</code> so Vault's JSON responses can be parsed directly into typed Rust structs with a single <code>serde_json::from_value(raw)?</code>.</p>
+
+<span class="anchor" id="crate-thiserror"></span>
+<h2>thiserror</h2>
+
+<span class="badge crate">thiserror 2</span>
+
+<p>Eliminates boilerplate for custom error types. Without it, you'd manually write <code>impl std::fmt::Display</code>, <code>impl std::error::Error</code>, and each <code>impl From&lt;SomeError&gt;</code> — many lines per variant. thiserror collapses all of that to one <code>#[error("...")]</code> attribute per variant.</p>
+
+<span class="anchor" id="crate-console"></span>
+<h2>console</h2>
+
+<span class="badge crate">console 0.15</span>
+
+<p>Terminal styling. The key API is <code>console::style("text")</code> which returns a styled string builder:</p>
+
+<pre><code class="language-rust">style("error").bold().red()    // bold red text
+style("****").dim()            // dimmed (for masked values)
+style("apps/").bold().blue()   // bold blue (directory names)
+style("[dry-run] ...").yellow() // yellow warning prefix
+
+// Turn off colors globally (respects --no-color flag)
+console::set_colors_enabled(false);</code></pre>
+
+<span class="anchor" id="crate-comfy"></span>
+<h2>comfy-table</h2>
+
+<span class="badge crate">comfy-table 7</span>
+
+<p>Renders aligned tables in the terminal. Used for <code>kivi get</code> (key/value display) and <code>kivi metadata show</code> (version history). The <code>NOTHING</code> preset removes all borders for a clean flush-left layout:</p>
+
+<pre><code class="language-rust">let mut table = Table::new();
+table.load_preset(NOTHING);    // no box-drawing borders
+table.add_row(vec![
+    Cell::new(key).add_attribute(Attribute::Bold).fg(Color::Cyan),
+    Cell::new(value),
+]);
+println!("{table}");</code></pre>
+
+<span class="anchor" id="crate-ptree"></span>
+<h2>ptree</h2>
+
+<span class="badge crate">ptree 0.4</span>
+
+<p>Renders ASCII trees using box-drawing characters. Uses the <code>TreeBuilder</code> API — you describe the tree structure and it handles all the ├──, └──, │ logic:</p>
+
+<pre><code class="language-rust">let mut builder = TreeBuilder::new("apps/".to_string());
+builder.begin_child("team-a/".to_string());  // opens a branch
+    builder.add_empty_child("service-1 [DB_HOST, DB_PASS]".to_string());  // leaf
+builder.end_child();                          // closes the branch
+let tree = builder.build();
+ptree::print_tree(&amp;tree)?;</code></pre>
+
+<p>Output: <code>apps/ → team-a/ → service-1 [...]</code> rendered with proper box-drawing.</p>
+
+<span class="anchor" id="crate-tempfile"></span>
+<h2>tempfile</h2>
+
+<span class="badge crate">tempfile 3</span>
+
+<p>Creates temporary files that are automatically deleted when dropped. This is RAII (Resource Acquisition Is Initialization) — Rust's ownership system guarantees cleanup:</p>
+
+<pre><code class="language-rust">let tmp = tempfile::Builder::new()
+    .prefix("kivi-edit-")
+    .suffix(".json")
+    .tempfile()?;         // creates /tmp/kivi-edit-XYZ.json
+
+tokio::fs::write(tmp.path(), &amp;content).await?;
+// ... open editor, read back ...
+
+// When `tmp` is dropped here (end of scope), the file is deleted automatically
+// Even if the function returns early via ?, the drop still runs
+</code></pre>
+
+<p>The guarantee that cleanup runs even on early returns (via <code>?</code>) is a key property of RAII — impossible to forget to delete the temp file.</p>
+
+<span class="anchor" id="crate-dialoguer"></span>
+<h2>dialoguer</h2>
+
+<span class="badge crate">dialoguer 0.11</span>
+
+<p>Interactive terminal prompts. Used for delete confirmations and CAS conflict resolution:</p>
+
+<pre><code class="language-rust">// Yes/No confirmation
+let confirmed = Confirm::new()
+    .with_prompt("Delete apps/service? [y/N]")
+    .default(false)           // default answer if user just presses Enter
+    .interact()?;             // blocks until user responds
+
+// Multiple-choice selection (for CAS conflict)
+let choice = Select::new()
+    .with_prompt("Secret was modified. What to do?")
+    .items(&amp;["Retry", "Force", "Abort"])
+    .default(0)
+    .interact()?;</code></pre>
+
+<span class="anchor" id="crate-dirs"></span>
+<h2>dirs</h2>
+
+<span class="badge crate">dirs 6</span>
+
+<p>Resolves platform-appropriate directory paths. On Linux follows XDG spec:</p>
+
+<pre><code class="language-rust">dirs::config_dir()   // → $XDG_CONFIG_HOME or ~/.config
+// Config lives at ~/.config/kivi/config.toml</code></pre>
+
+<span class="anchor" id="crate-toml"></span>
+<h2>toml</h2>
+
+<span class="badge crate">toml 0.8</span>
+
+<p>Parses and serializes TOML (Tom's Obvious Minimal Language). Used only for the config file. Since <code>Config</code> derives <code>serde::Deserialize/Serialize</code>, the full workflow is:</p>
+
+<pre><code class="language-rust">// Load
+let contents = std::fs::read_to_string(&amp;path)?;
+let config: Config = toml::from_str(&amp;contents)?;
+
+// Save
+let toml_string = toml::to_string_pretty(&amp;config)?;
+std::fs::write(&amp;path, toml_string)?;</code></pre>
+
+<!-- ───────── DESIGN DECISIONS ───────── -->
+<span class="anchor" id="d-vaultargs"></span>
+<h2>VaultArgs Flattening</h2>
+
+<p>The initial design had Vault connection flags as <em>global</em> flags on the top-level <code>Cli</code> struct:</p>
+
+<pre><code class="language-rust">// OLD — global = true made them appear in every subcommand's --help
+pub struct Cli {
+    #[arg(short = 'a', long, env = "VAULT_ADDR", global = true)]
+    pub address: Option&lt;String&gt;,
+    ...
+}</code></pre>
+
+<p>This caused <code>kivi config set --help</code> to show <code>--address</code>, <code>--token</code>, and <code>--mount</code> — flags irrelevant to config management. Worse, <code>kivi config set -m apps</code> was misinterpreted: <code>-m</code> was consumed as the global mount flag, leaving <code>&lt;KEY&gt;</code> and <code>&lt;VALUE&gt;</code> unset.</p>
+
+<p>The fix: <code>VaultArgs</code> is a separate <code>#[derive(Args)]</code> struct that is <code>#[command(flatten)]</code>-ed into each vault command that needs it. <code>config</code> and <code>completion</code> don't flatten it in, so they're clean:</p>
+
+<pre><code class="language-rust">pub struct GetArgs {
+    pub path: String,
+    #[command(flatten)]
+    pub vault: VaultArgs,     // Vault flags appear here
+    #[command(flatten)]
+    pub display: OutputArgs,  // --output, --no-color appear here
+}
+
+pub struct ConfigSetArgs {
+    pub key: String,
+    pub value: String,
+    // No vault, no display — config set help shows only &lt;KEY&gt; &lt;VALUE&gt;
+}</code></pre>
+
+<span class="anchor" id="d-extractors"></span>
+<h2>The vault_args_for / no_color_for Pattern</h2>
+
+<p>This is the code you highlighted. Since <code>VaultArgs</code> is embedded inside each command's args struct (not at the top level), <code>main.rs</code> needs a way to extract it regardless of which command was parsed. The <code>Commands</code> enum doesn't have a common trait with a <code>vault_args()</code> method — that would require Rust traits on enum variants, which don't exist.</p>
+
+<p>The solution is a free function that matches on every variant:</p>
+
+<pre><code class="language-rust">fn vault_args_for(cmd: &amp;Commands) -> &amp;VaultArgs {
+    match cmd {
+        Commands::Get(a)       => &amp;a.vault,
+        Commands::List(a)      => &amp;a.vault,
+        Commands::Tree(a)      => &amp;a.vault,
+        // ... every vault command ...
+        Commands::Metadata(a)  => match &amp;a.command {   // nested subcommand
+            MetadataCommand::Show(x)   => &amp;x.vault,
+            MetadataCommand::Set(x)    => &amp;x.vault,
+            MetadataCommand::Delete(x) => &amp;x.vault,
+        },
+        Commands::Config(_) | Commands::Completion(_) => {
+            unreachable!("called on non-vault command")
+            // Can only reach this if the caller has a bug — safe to panic
+        }
+    }
+}</code></pre>
+
+<p><code>no_color_for</code> does the same for the <code>--no-color</code> flag, which lives on <code>OutputArgs</code> inside display commands (not on vault-only commands like <code>put</code>):</p>
+
+<pre><code class="language-rust">fn no_color_for(cmd: &amp;Commands) -> bool {
+    match cmd {
+        Commands::Get(a) | Commands::List(a) | Commands::Tree(a) => a.display.no_color,
+        // Metadata is special — only the Show subcommand has display args
+        Commands::Metadata(a) => matches!(&amp;a.command, MetadataCommand::Show(x) if x.display.no_color),
+        _ => false,  // mutating commands don't have --no-color
+    }
+}</code></pre>
+
+<div class="note">Alternative: implement a <code>VaultCommand</code> trait with a <code>vault_args()</code> method and have each Args struct implement it. This would be more extensible but adds a lot of boilerplate for a simple extraction. The match-based approach is explicit and the compiler enforces completeness when new commands are added.</div>
+
+<span class="anchor" id="d-arc-asymmetry"></span>
+<h2>Arc Asymmetry — Why Some Commands Take Arc, Others Take &amp;</h2>
+
+<table>
+<tr><th>Command</th><th>Parameter</th><th>Why</th></tr>
+<tr><td>get, put, patch, edit, undelete, metadata</td><td><code>&amp;VaultClient</code></td><td>Sequential — one API call at a time. A borrow is sufficient.</td></tr>
+<tr><td>list (with --long), tree, delete (--recursive)</td><td><code>Arc&lt;VaultClient&gt;</code></td><td>Spawns concurrent tokio tasks. Tasks need <code>'static</code> data. Each task does <code>Arc::clone(&amp;client)</code> to get its own handle.</td></tr>
+</table>
+
+<p>At call sites in <code>main.rs</code>, <code>client</code> is always <code>Arc&lt;VaultClient&gt;</code>. Passing <code>&amp;client</code> to a function expecting <code>&amp;VaultClient</code> works via deref coercion: <code>Arc&lt;T&gt;</code> implements <code>Deref&lt;Target = T&gt;</code>, so <code>&amp;Arc&lt;VaultClient&gt;</code> automatically coerces to <code>&amp;VaultClient</code>.</p>
+
+<span class="anchor" id="d-joinset"></span>
+<h2>JoinSet — Bounded Concurrent Fan-Out</h2>
+
+<p>The critical drain bug that the code review caught:</p>
+
+<pre><code class="language-rust">// WRONG — drain(..) removes ALL items; take(16) only consumes 16; rest are DROPPED
+let batch: Vec&lt;_&gt; = dirs.drain(..).take(MAX_CONCURRENT).collect();
+
+// CORRECT — drain only as many as you intend to process
+let n = dirs.len().min(MAX_CONCURRENT);
+let batch: Vec&lt;_&gt; = dirs.drain(..n).collect();</code></pre>
+
+<p>Why: <code>Vec::drain(range)</code> returns a <code>Drain</code> iterator that lazily yields elements. When <code>.take(16)</code> stops consuming after 16 items, the <code>Drain</code> is dropped. <code>Drain</code>'s <code>Drop</code> implementation removes ALL unconsumed elements from the Vec. So any directory beyond the 16th sibling was silently discarded — leading to incomplete tree listings and missed recursive deletes.</p>
+
+<span class="anchor" id="d-editor"></span>
+<h2>editor.rs — Owning the Full Workflow</h2>
+
+<p>Initially, <code>cli/edit.rs</code> had two paths: <code>--dry-run</code> (opening editor, reading back, but not writing) and normal (delegating to <code>editor::open_editor</code>). This duplicated the "open temp file + invoke editor + read back" steps.</p>
+
+<p>The fix: <code>open_editor</code> takes a <code>dry_run: bool</code> parameter and handles both paths internally. <code>cli/edit.rs::run()</code> becomes a single function call — the CLI adapter only parses args and calls the workflow once:</p>
+
+<pre><code class="language-rust">// cli/edit.rs — now just 35 lines
+pub async fn run(args: &amp;EditArgs, client: &amp;VaultClient, mount: &amp;str) -> Result&lt;(), KiviError&gt; {
+    match crate::editor::open_editor(
+        client, mount, &amp;args.path, args.no_cas, args.diff, args.dry_run
+    ).await? {
+        Some(version) => println!("Written: {}/{} (version {})", mount, args.path, version),
+        None => {}
+    }
+    Ok(())
+}</code></pre>
+
+<span class="anchor" id="d-error"></span>
+<h2>KiviError — Typed Error Design</h2>
+
+<p>KiviError uses named-field struct variants for errors that carry context, and unit variants for errors that are self-explanatory:</p>
+
+<pre><code class="language-rust">NoToken,                              // unit — no context needed; message is self-contained
+Forbidden { path: String },           // struct variant — which path triggered 403?
+CasConflict { path: String, expected: u64 },  // two pieces of context
+Http(#[from] reqwest::Error),         // tuple variant — wraps an external error type
+TaskPanic(String),                    // tuple — task panicked, carrying the panic message</code></pre>
+
+<p>The benefit of specific variants over a generic string error: callers can match on <code>KiviError::CasConflict</code> and take specific action (the retry/force/abort loop in <code>editor.rs</code>), rather than parsing error strings.</p>
+
+<span class="anchor" id="d-output"></span>
+<h2>Output — Dual Mode, Values Hidden by Default</h2>
+
+<p>Output format and value visibility are orthogonal — controlled by separate flags:</p>
+
+<ul>
+  <li><code>--output human</code> (default) → ptree for trees, comfy-table for get, plain list for list</li>
+  <li><code>--output json</code> → JSON via serde_json, same <code>ValueMode</code> applied</li>
+  <li><code>--show-values</code> → reveal actual values in either format</li>
+  <li><code>--keys-only</code> → omit values entirely in either format</li>
+</ul>
+
+<p>The <code>apply_value_mode</code> function in <code>output/mod.rs</code> is the single source of truth:</p>
+
+<pre><code class="language-rust">pub fn apply_value_mode(data: &amp;HashMap&lt;String, Value&gt;, mode: ValueMode) -&gt; HashMap&lt;String, Value&gt; {
+    match mode {
+        ValueMode::Revealed  => data.clone(),
+        ValueMode::Masked    => data.keys().map(|k| (k.clone(), Value::String("****".into()))).collect(),
+        ValueMode::KeysOnly  => HashMap::new(),   // caller uses .keys() instead
+    }
+}</code></pre>
+
+<!-- ───────── FILE WALKTHROUGHS ───────── -->
+<span class="anchor" id="f-main"></span>
+<h2>main.rs walkthrough</h2>
+
+<pre><code class="language-rust">mod cli;         // declares src/cli/ as the `cli` module
+mod completion;  // src/completion.rs
+// ...
+
+use crate::cli::{Cli, Commands, VaultArgs};  // crate:: = root of this crate (kivi)
+// (std:: = standard library, external crate names are used directly)
+
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
+        eprintln!("{}: {}", console::style("error").bold().red(), e);
+        std::process::exit(1);  // non-zero exit code for shell scripting
+    }
+}
+
+async fn run() -> Result&lt;(), KiviError&gt; {
+    let cli = Cli::parse();  // clap parses std::env::args() and populates Cli
+
+    // Early returns for commands that don't need Vault
+    match &amp;cli.command { ... }
+
+    let cfg = Config::load()?;  // auto-creates ~/.config/kivi/config.toml if absent
+
+    let vault_args = vault_args_for(&amp;cli.command);   // extract embedded VaultArgs
+    let (address, token, mount) = resolve_vault(vault_args, &amp;cfg)?;
+    // resolve_vault implements the precedence chain:
+    //   CLI flag → env var (via clap's env=) → config file → error
+
+    let client = Arc::new(VaultClient::new(&amp;address, &amp;token, vault_args.namespace.as_deref()));
+    // Arc::new wraps the client for potential multi-task sharing
+
+    match &amp;cli.command {
+        Commands::Get(args) => cli::get::run(args, &amp;client, &amp;mount, show_values_global).await?,
+        // &amp;client: Arc&lt;VaultClient&gt; deref-coerces to &amp;VaultClient here
+        Commands::List(args) => cli::list::run(args, Arc::clone(&amp;client), &amp;mount).await?,
+        // Arc::clone: explicit ownership transfer for concurrent use
+        ...
+    }
+}</code></pre>
+
+<span class="anchor" id="f-error"></span>
+<h2>error.rs walkthrough</h2>
+
+<pre><code class="language-rust">#[derive(thiserror::Error, Debug)]
+// Debug is needed by thiserror::Error
+// Error generates: impl std::error::Error + impl std::fmt::Display
+
+pub enum KiviError {
+    #[error("VAULT_TOKEN is not set...")]
+    NoToken,
+    // A unit variant: KiviError::NoToken
+
+    #[error("Permission denied at path: {path}")]
+    Forbidden { path: String },
+    // Named field variant: KiviError::Forbidden { path: "apps/svc".to_string() }
+
+    #[error("HTTP error: {0}")]
+    Http(#[from] reqwest::Error),
+    // Tuple variant + From impl:
+    // - KiviError::Http(reqwest_error)
+    // - reqwest::Error can now be used with ? in fns returning Result&lt;_, KiviError&gt;
+
+    #[error("Task panicked: {0}")]
+    TaskPanic(String),
+    // Used when a JoinSet task panics — JoinError is not reqwest/io/json so no #[from]
+}</code></pre>
+
+<span class="anchor" id="f-config"></span>
+<h2>config.rs walkthrough</h2>
+
+<pre><code class="language-rust">#[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]    // missing fields use Default values
+pub struct Config {
+    pub address: String,
+    pub mount: String,
+    pub default_path: String,
+    pub editor_format: String,
+    pub show_values: bool,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            address: String::new(),
+            mount: "secret".to_string(),   // Vault's default KV mount
+            editor_format: "json".to_string(),
+            show_values: false,
+            ...
+        }
+    }
+}
+
+impl Config {
+    pub fn path() -> PathBuf {
+        dirs::config_dir()
+            .unwrap_or_else(|| PathBuf::from("~/.config"))
+            .join("kivi")
+            .join("config.toml")
+        // → ~/.config/kivi/config.toml (Linux/XDG)
+    }
+
+    pub fn load() -> Result&lt;Self, KiviError&gt; {
+        let path = Self::path();
+        if !path.exists() {
+            let config = Config::default();
+            config.save()?;   // create with defaults
+            eprintln!("Created default config at {}", path.display());
+            return Ok(config);
+        }
+        let contents = std::fs::read_to_string(&amp;path)?;
+        toml::from_str(&amp;contents).map_err(|e| KiviError::Config(...))
+    }
+}</code></pre>
+
+<span class="anchor" id="f-client"></span>
+<h2>vault/client.rs walkthrough</h2>
+
+<pre><code class="language-rust">pub struct VaultClient {
+    client: reqwest::Client,  // reqwest::Client is cheap to clone but expensive to create
+    address: String,
+    token: String,
+}
+// No pub on client — it's an implementation detail. Only VaultClient methods are public API.
+
+impl VaultClient {
+    pub fn new(address: impl Into&lt;String&gt;, token: impl Into&lt;String&gt;, namespace: Option&lt;&amp;str&gt;) -> Self {
+        let mut headers = reqwest::header::HeaderMap::new();
+        if let Some(ns) = namespace {
+            // Vault Enterprise namespace sent on every request via default headers
+            headers.insert("X-Vault-Namespace", HeaderValue::from_str(ns).unwrap());
+        }
+        Self {
+            client: Client::builder()
+                .timeout(Duration::from_secs(30))  // hard timeout on every request
+                .default_headers(headers)
+                .build()
+                .expect("failed to build HTTP client"),
+                // expect() here is justified: building a client only fails on invalid config,
+                // which is a programming error not a runtime condition
+            ...
+        }
+    }
+
+    fn url(&amp;self, path: &amp;str) -> String {
+        format!("{}/v1/{}", self.address, path.trim_start_matches('/'))
+        // trim_start_matches prevents double-slash: "https://vault/v1//apps/..."
+    }
+
+    pub async fn patch(&amp;self, path: &amp;str, body: &amp;Value) -> Result&lt;Value, KiviError&gt; {
+        self.client
+            .patch(self.url(path))
+            .header("X-Vault-Token", &amp;self.token)
+            .json(body)                                          // sets Content-Type: application/json
+            .header("Content-Type", "application/merge-patch+json")  // overrides it (HeaderMap::insert replaces)
+            .send().await?
+        // Order matters: .json() last would overwrite our Content-Type
+    }
+}</code></pre>
+
+<span class="anchor" id="f-kv"></span>
+<h2>vault/kv.rs walkthrough</h2>
+
+<pre><code class="language-rust">// All KVv2 API paths follow a pattern:
+// Read:          {mount}/data/{path}
+// List:          {mount}/metadata/{path}  (LIST verb)
+// Write:         {mount}/data/{path}      (POST with CAS option)
+// Patch:         {mount}/data/{path}      (PATCH, merge-patch+json)
+// Soft delete:   {mount}/data/{path}      (DELETE)
+// Hard delete:   {mount}/delete/{path}    (POST with versions array)
+// Undelete:      {mount}/undelete/{path}  (POST)
+// Destroy:       {mount}/destroy/{path}   (POST)
+// Metadata R:    {mount}/metadata/{path}  (GET)
+// Metadata W:    {mount}/metadata/{path}  (POST)
+// Metadata del:  {mount}/metadata/{path}  (DELETE)
+
+pub async fn list_recursive(
+    client: Arc&lt;VaultClient&gt;,   // Arc because we spawn tasks
+    mount: &amp;str,
+    path: &amp;str,
+    max_depth: Option&lt;usize&gt;,
+) -> Result&lt;Vec&lt;String&gt;, KiviError&gt; {
+    let mut leaves = Vec::new();
+    let mut queue: Vec&lt;(String, usize)&gt; = vec![(path.to_string(), 0)];
+
+    while !queue.is_empty() {
+        let n = queue.len().min(MAX_CONCURRENT);  // CORRECT bounded drain
+        let batch: Vec&lt;_&gt; = queue.drain(..n).collect();
+
+        let mut set: JoinSet&lt;Result&lt;(String, usize, Vec&lt;String&gt;), KiviError&gt;&gt; = JoinSet::new();
+        for (dir, depth) in batch {
+            let client = Arc::clone(&amp;client);   // cheap atomic increment
+            let mount = mount.to_string();       // move a clone into the async block
+            set.spawn(async move {              // move captures vars by value
+                let keys = list_keys(&amp;client, &amp;mount, &amp;dir).await?;
+                Ok((dir, depth, keys))
+            });
+        }
+
+        while let Some(result) = set.join_next().await {
+            let (dir, depth, keys) = result
+                .map_err(|e| KiviError::TaskPanic(e.to_string()))??;
+            //                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^      ^^ = KiviError from list_keys
+            //                outer ? = JoinError (task panicked), mapped to KiviError::TaskPanic
+            ...
+        }
+    }
+    leaves.sort();  // deterministic output regardless of task completion order
+    Ok(leaves)
+}</code></pre>
+
+<span class="anchor" id="f-editor"></span>
+<h2>editor.rs walkthrough</h2>
+
+<pre><code class="language-rust">pub async fn open_editor(
+    client: &amp;VaultClient,
+    mount: &amp;str,
+    path: &amp;str,
+    no_cas: bool,
+    show_diff: bool,
+    dry_run: bool,
+) -> Result&lt;Option&lt;u64&gt;, KiviError&gt; {
+    // Returns Ok(Some(version)) = wrote successfully
+    //         Ok(None) = no changes or aborted
+    //         Err(e) = error
+
+    loop {  // loop for the CAS retry case
+        let secret = kv::read(client, mount, path, None).await?;
+        let original_json = serde_json::to_string_pretty(&amp;secret.data)?;
+        let version = secret.metadata.version;  // capture version for CAS
+
+        let tmp = tempfile::Builder::new()
+            .suffix(".json")
+            .tempfile()?;  // file deleted when tmp is dropped (even on early return)
+
+        tokio::fs::write(tmp.path(), &amp;original_json).await?;  // non-blocking write
+
+        let status = tokio::process::Command::new(&amp;editor)
+            .arg(tmp.path())
+            .status()      // returns when editor exits
+            .await?;       // non-blocking: yields runtime thread while editor runs
+
+        let edited = tokio::fs::read_to_string(tmp.path()).await?;
+
+        if edited.trim() == original_json.trim() {
+            return Ok(None);  // no changes
+        }
+
+        if dry_run {
+            print_diff(&amp;secret.data, &amp;new_data);
+            eprintln!("[dry-run] ...");
+            return Ok(None);  // show but don't write
+        }
+
+        let cas = if no_cas { None } else { Some(version) };
+        // CAS = Check-And-Set: Vault rejects the write if version != current_version
+        // This prevents silently overwriting concurrent changes
+
+        match kv::write(client, mount, path, new_data, cas).await {
+            Ok(new_version) => return Ok(Some(new_version)),
+            Err(KiviError::CasConflict { .. }) => {
+                // Someone modified the secret between our read and write
+                // Give user three choices: retry (re-fetch + re-edit), force, or abort
+                let choice = Select::new()...interact()?;
+                match choice {
+                    0 => continue,  // jump to top of loop, re-fetches latest
+                    1 => { kv::write(..., None).await?; ... }  // None = skip CAS
+                    _ => return Ok(None),
+                }
+            }
+            Err(e) => return Err(e),  // propagate any other error
+        }
+    }
+}</code></pre>
+
+<span class="anchor" id="f-completion"></span>
+<h2>completion.rs walkthrough</h2>
+
+<pre><code class="language-rust">const COMPLETION_TIMEOUT: Duration = Duration::from_secs(10);
+
+pub async fn complete(partial: &amp;str, client: &amp;VaultClient, mount: &amp;str) -> Vec&lt;String&gt; {
+    // Note: returns Vec, not Result — completion must never error or hang the shell
+    let result = timeout(COMPLETION_TIMEOUT, do_complete(partial, client, mount)).await;
+    match result {
+        Ok(Ok(entries)) => entries,
+        _ => vec![],    // timeout or Vault error → empty completions, shell continues normally
+    }
+}
+
+async fn do_complete(partial: &amp;str, client: &amp;VaultClient, mount: &amp;str) -> Result&lt;Vec&lt;String&gt;, KiviError&gt; {
+    // Split "apps/team-a/ser" into parent="apps/team-a", prefix="ser"
+    let (parent, prefix) = match partial.rfind('/') {
+        Some(idx) => (&amp;partial[..idx], &amp;partial[idx + 1..]),
+        None      => ("", partial),   // no slash = completing at root
+    };
+
+    let keys = kv::list_keys(client, mount, parent).await?;
+    // e.g. ["infrastructure/", "rdu2/", "vault"] for the root
+
+    Ok(keys.into_iter()
+        .filter(|k| k.starts_with(prefix))   // only entries matching typed prefix
+        .map(|k| if parent.is_empty() { k } else { format!("{parent}/{k}") })
+        .collect())
+    // dirs end with "/" — shell sees this and doesn't add a trailing space
+    // leaves don't — shell adds a space, completing the argument
+}</code></pre>
+
+<span class="anchor" id="f-output"></span>
+<h2>output/ walkthrough</h2>
+
+<pre><code class="language-rust">// output/mod.rs
+#[derive(Debug, Clone, Copy, ValueEnum, Default)]
+pub enum OutputFormat {
+    #[default]   // used when --output is not provided
+    Human,
+    Json,
+}
+// ValueEnum (from clap) generates: --output human | --output json (tab-completed)
+// Copy means we can pass OutputFormat by value freely (it's just one byte)
+
+#[derive(Debug, Clone, Copy)]
+pub enum ValueMode { Masked, Revealed, KeysOnly }
+
+pub fn resolve_value_mode(show_values: bool, keys_only: bool) -> ValueMode {
+    if keys_only { ValueMode::KeysOnly }
+    else if show_values { ValueMode::Revealed }
+    else { ValueMode::Masked }   // default: masked
+}
+
+// output/json.rs
+#[derive(Default)]     // derives Default using BTreeMap's Default impl
+pub struct TreeNode {
+    pub children: BTreeMap&lt;String, TreeNode&gt;,  // BTreeMap = sorted by key → deterministic output
+    pub secrets:  BTreeMap&lt;String, HashMap&lt;String, Value&gt;&gt;,
+}
+// BTreeMap vs HashMap: BTreeMap maintains sorted order (needed for deterministic tree rendering)
+//                      HashMap has O(1) average lookups, BTreeMap O(log n)
+//                      For display-only trees, predictable ordering &gt; raw speed</code></pre>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:48px 0 24px">
+<p style="color:var(--muted);font-size:13px;text-align:center">kivi codebase reference — generated 2026-07-12</p>
+
+</main>
+
+<script>
+// Scrollspy
+const sections = document.querySelectorAll('.anchor');
+const links = document.querySelectorAll('nav a');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -75% 0px' });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
