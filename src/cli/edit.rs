@@ -27,11 +27,11 @@ pub async fn run(
     mount: &str,
     path: &str,
 ) -> Result<(), KiviError> {
-    match crate::editor::open_editor(client, mount, path, args.no_cas, args.diff, args.dry_run)
-        .await?
+    if let Some(version) =
+        crate::editor::open_editor(client, mount, path, args.no_cas, args.diff, args.dry_run)
+            .await?
     {
-        Some(version) => println!("Written: {}/{} (version {})", mount, path, version),
-        None => {}
+        println!("Written: {}/{} (version {})", mount, path, version);
     }
     Ok(())
 }

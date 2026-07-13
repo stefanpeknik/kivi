@@ -2,7 +2,7 @@ use crate::error::KiviError;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -12,17 +12,6 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_path: Option<String>,
     pub show_values: bool,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            address: None,
-            mount: None,
-            default_path: None,
-            show_values: false,
-        }
-    }
 }
 
 impl Config {

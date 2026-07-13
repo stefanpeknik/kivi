@@ -54,13 +54,12 @@ pub async fn write(
             status: 400,
             ref message,
         } = e
+            && (message.contains("check-and-set") || message.contains("CAS"))
         {
-            if message.contains("check-and-set") || message.contains("CAS") {
-                return KiviError::CasConflict {
-                    path: path.to_string(),
-                    expected: cas.unwrap_or(0),
-                };
-            }
+            return KiviError::CasConflict {
+                path: path.to_string(),
+                expected: cas.unwrap_or(0),
+            };
         }
         e
     })?;
@@ -177,7 +176,8 @@ pub async fn list_recursive(
         let n = queue.len().min(MAX_CONCURRENT);
         let batch: Vec<_> = queue.drain(..n).collect();
 
-        let mut set: JoinSet<Result<(String, usize, Vec<String>), KiviError>> = JoinSet::new();
+        type ListResult = Result<(String, usize, Vec<String>), KiviError>;
+        let mut set: JoinSet<ListResult> = JoinSet::new();
         for (dir, depth) in batch {
             let client = Arc::clone(&client);
             let mount = mount.to_string();
@@ -196,7 +196,7 @@ pub async fn list_recursive(
                         dir.trim_end_matches('/'),
                         key.trim_end_matches('/')
                     );
-                    if max_depth.map_or(true, |d| depth + 1 <= d) {
+                    if max_depth.is_none_or(|d| depth < d) {
                         queue.push((child, depth + 1));
                     }
                 } else {

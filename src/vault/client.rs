@@ -20,10 +20,10 @@ impl VaultClient {
         namespace: Option<&str>,
     ) -> Self {
         let mut headers = reqwest::header::HeaderMap::new();
-        if let Some(ns) = namespace {
-            if let Ok(val) = reqwest::header::HeaderValue::from_str(ns) {
-                headers.insert("X-Vault-Namespace", val);
-            }
+        if let Some(ns) = namespace
+            && let Ok(val) = reqwest::header::HeaderValue::from_str(ns)
+        {
+            headers.insert("X-Vault-Namespace", val);
         }
         Self {
             client: Client::builder()

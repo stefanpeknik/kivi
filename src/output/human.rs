@@ -136,18 +136,19 @@ pub fn print_metadata(path: &str, meta: &FullMetadataData) {
     println!("CAS required:    {}", meta.cas_required);
     println!("Created:         {}", meta.created_time);
     println!("Updated:         {}", meta.updated_time);
-    if let Some(ref dva) = meta.delete_version_after {
-        if !dva.is_empty() && dva != "0s" {
-            println!("Delete after:    {}", dva);
-        }
+    if let Some(ref dva) = meta.delete_version_after
+        && !dva.is_empty()
+        && dva != "0s"
+    {
+        println!("Delete after:    {}", dva);
     }
 
-    if let Some(ref cm) = meta.custom_metadata {
-        if !cm.is_empty() {
-            println!("\nCustom metadata:");
-            for (k, v) in cm {
-                println!("  {}: {}", style(k).cyan(), v);
-            }
+    if let Some(ref cm) = meta.custom_metadata
+        && !cm.is_empty()
+    {
+        println!("\nCustom metadata:");
+        for (k, v) in cm {
+            println!("  {}: {}", style(k).cyan(), v);
         }
     }
 

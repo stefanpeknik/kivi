@@ -73,7 +73,8 @@ async fn build_tree(
         let n = queue.len().min(MAX_CONCURRENT);
         let batch: Vec<_> = queue.drain(..n).collect();
 
-        let mut set: JoinSet<Result<(Vec<String>, usize, Vec<String>), KiviError>> = JoinSet::new();
+        type ListResult = Result<(Vec<String>, usize, Vec<String>), KiviError>;
+        let mut set: JoinSet<ListResult> = JoinSet::new();
         for (vault_path, tree_parts, depth) in batch {
             let client = Arc::clone(&client);
             let mount = mount.to_string();
@@ -92,7 +93,7 @@ async fn build_tree(
                 if key.ends_with('/') {
                     let dir_name = key.trim_end_matches('/').to_string();
                     child_parts.push(dir_name.clone());
-                    if max_depth.map_or(true, |d| depth + 1 <= d) {
+                    if max_depth.is_none_or(|d| depth < d) {
                         let child_vault_path =
                             format!("{}/{}", path.trim_end_matches('/'), child_parts.join("/"));
                         queue.push((child_vault_path, child_parts, depth + 1));
