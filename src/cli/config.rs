@@ -59,8 +59,8 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
     match &args.command {
         ConfigCommand::Show => {
             let config = Config::load()?;
-            let toml = toml::to_string_pretty(&config)
-                .map_err(|e| KiviError::Config(e.to_string()))?;
+            let toml =
+                toml::to_string_pretty(&config).map_err(|e| KiviError::Config(e.to_string()))?;
             print!("{toml}");
         }
         ConfigCommand::Set(a) => {
@@ -76,10 +76,18 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
             }
             let mut config = Config::load()?;
             let to_opt = |s: &String| if s.is_empty() { None } else { Some(s.clone()) };
-            if let Some(ref v) = a.address      { config.address = to_opt(v); }
-            if let Some(ref v) = a.mount        { config.mount = to_opt(v); }
-            if let Some(ref v) = a.default_path { config.default_path = to_opt(v); }
-            if let Some(v)     = a.show_values  { config.show_values = v; }
+            if let Some(ref v) = a.address {
+                config.address = to_opt(v);
+            }
+            if let Some(ref v) = a.mount {
+                config.mount = to_opt(v);
+            }
+            if let Some(ref v) = a.default_path {
+                config.default_path = to_opt(v);
+            }
+            if let Some(v) = a.show_values {
+                config.show_values = v;
+            }
             config.save()?;
             println!("Config updated: {}", Config::path().display());
         }
@@ -90,9 +98,15 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
                 ));
             }
             let mut config = Config::load()?;
-            if a.address      { config.address = None; }
-            if a.mount        { config.mount = None; }
-            if a.default_path { config.default_path = None; }
+            if a.address {
+                config.address = None;
+            }
+            if a.mount {
+                config.mount = None;
+            }
+            if a.default_path {
+                config.default_path = None;
+            }
             config.save()?;
             println!("Config updated: {}", Config::path().display());
         }

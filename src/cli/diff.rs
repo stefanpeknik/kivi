@@ -3,8 +3,8 @@ use crate::vault::client::VaultClient;
 use crate::vault::kv;
 use clap::Args;
 use console::style;
-use similar::{ChangeTag, InlineChange, TextDiff};
 use serde_json::Value;
+use similar::{ChangeTag, InlineChange, TextDiff};
 use std::collections::{BTreeMap, HashMap};
 
 #[derive(Args, Debug)]
@@ -75,10 +75,10 @@ fn print_structural_diff(from: &HashMap<String, Value>, to: &HashMap<String, Val
 
     for key in &all_keys {
         match (from.get(*key), to.get(*key)) {
-            (None, Some(_))                             => added.push(key),
-            (Some(_), None)                             => removed.push(key),
-            (Some(f), Some(t)) if f != t                => changed.push(key),
-            _                                           => {} // unchanged — not shown
+            (None, Some(_)) => added.push(key),
+            (Some(_), None) => removed.push(key),
+            (Some(f), Some(t)) if f != t => changed.push(key),
+            _ => {} // unchanged — not shown
         }
     }
 
@@ -87,19 +87,29 @@ fn print_structural_diff(from: &HashMap<String, Value>, to: &HashMap<String, Val
         return;
     }
 
-    for key in &added   { println!("  {}  {}", style("+").bold().green(),  style(key).green()); }
-    for key in &changed { println!("  {}  {}", style("~").bold().yellow(), style(key).yellow()); }
-    for key in &removed { println!("  {}  {}", style("-").bold().red(),    style(key).red()); }
+    for key in &added {
+        println!("  {}  {}", style("+").bold().green(), style(key).green());
+    }
+    for key in &changed {
+        println!("  {}  {}", style("~").bold().yellow(), style(key).yellow());
+    }
+    for key in &removed {
+        println!("  {}  {}", style("-").bold().red(), style(key).red());
+    }
 
     println!();
     println!(
         "{}",
         style(format!(
             "{} addition{}, {} change{}, {} removal{}",
-            added.len(),   if added.len()   == 1 { "" } else { "s" },
-            changed.len(), if changed.len() == 1 { "" } else { "s" },
-            removed.len(), if removed.len() == 1 { "" } else { "s" },
-        )).dim()
+            added.len(),
+            if added.len() == 1 { "" } else { "s" },
+            changed.len(),
+            if changed.len() == 1 { "" } else { "s" },
+            removed.len(),
+            if removed.len() == 1 { "" } else { "s" },
+        ))
+        .dim()
     );
 }
 
@@ -112,7 +122,7 @@ fn print_text_diff(from: &HashMap<String, Value>, to: &HashMap<String, Value>) {
     };
 
     let from_json = to_sorted_json(from);
-    let to_json   = to_sorted_json(to);
+    let to_json = to_sorted_json(to);
 
     if from_json == to_json {
         println!("{}", style("No changes.").dim());
@@ -136,7 +146,7 @@ fn print_inline_change(change: &InlineChange<str>) {
     let (sign, line_style): (&str, fn(&str) -> String) = match change.tag() {
         ChangeTag::Delete => ("-", |s| style(s).red().to_string()),
         ChangeTag::Insert => ("+", |s| style(s).green().to_string()),
-        ChangeTag::Equal  => (" ", |s| s.to_string()),
+        ChangeTag::Equal => (" ", |s| s.to_string()),
     };
 
     print!("{sign}");
@@ -146,7 +156,7 @@ fn print_inline_change(change: &InlineChange<str>) {
             let highlighted = match change.tag() {
                 ChangeTag::Delete => style(text.as_ref()).red().bold().underlined().to_string(),
                 ChangeTag::Insert => style(text.as_ref()).green().bold().underlined().to_string(),
-                ChangeTag::Equal  => text.into_owned(),
+                ChangeTag::Equal => text.into_owned(),
             };
             print!("{highlighted}");
         } else {

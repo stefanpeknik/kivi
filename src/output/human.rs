@@ -1,5 +1,5 @@
-use crate::output::{ValueMode, MASK};
 use crate::output::TreeNode;
+use crate::output::{MASK, ValueMode};
 use crate::vault::types::{FullMetadataData, KvReadData};
 use comfy_table::{Attribute, Cell, Color, Table, presets::NOTHING};
 use console::style;
@@ -7,12 +7,17 @@ use ptree::TreeBuilder;
 use serde_json::Value;
 
 fn display_value(v: &Value) -> String {
-    v.as_str().map(|s| s.to_string()).unwrap_or_else(|| v.to_string())
+    v.as_str()
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| v.to_string())
 }
 
 pub fn print_secret(path: &str, secret: &KvReadData, mode: ValueMode) {
     println!("{}", style(format!("Path:    {path}")).bold());
-    println!("{}", style(format!("Version: {}", secret.metadata.version)).dim());
+    println!(
+        "{}",
+        style(format!("Version: {}", secret.metadata.version)).dim()
+    );
     println!();
 
     if matches!(mode, ValueMode::KeysOnly) {
@@ -44,7 +49,6 @@ pub fn print_secret(path: &str, secret: &KvReadData, mode: ValueMode) {
 
     println!("{table}");
 }
-
 
 pub fn print_tree(root_path: &str, node: &TreeNode, mode: ValueMode) {
     let root_label = style(format!("{root_path}/")).bold().blue().to_string();
@@ -161,8 +165,16 @@ pub fn print_metadata(path: &str, meta: &FullMetadataData) {
         Cell::new("Destroyed").add_attribute(Attribute::Bold),
     ]);
     for (ver, info) in sorted_versions {
-        let deleted = info.deletion_time.as_deref().filter(|s| !s.is_empty()).unwrap_or("-");
-        let destroyed = if info.destroyed { style("yes").red().to_string() } else { "-".to_string() };
+        let deleted = info
+            .deletion_time
+            .as_deref()
+            .filter(|s| !s.is_empty())
+            .unwrap_or("-");
+        let destroyed = if info.destroyed {
+            style("yes").red().to_string()
+        } else {
+            "-".to_string()
+        };
         table.add_row(vec![
             Cell::new(ver),
             Cell::new(&info.created_time),
@@ -172,4 +184,3 @@ pub fn print_metadata(path: &str, meta: &FullMetadataData) {
     }
     println!("{table}");
 }
-

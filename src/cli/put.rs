@@ -31,18 +31,25 @@ pub struct PutArgs {
     /// Show what would happen without writing
     #[arg(long)]
     pub dry_run: bool,
-
 }
 
-pub async fn run(args: &PutArgs, client: &VaultClient, mount: &str, path: &str) -> Result<(), KiviError> {
+pub async fn run(
+    args: &PutArgs,
+    client: &VaultClient,
+    mount: &str,
+    path: &str,
+) -> Result<(), KiviError> {
     let data = parse_input(args).await?;
 
     if args.dry_run {
         let keys = data.keys().cloned().collect::<Vec<_>>().join(", ");
         eprintln!(
             "{}",
-            style(format!("[dry-run] Would write to {}/{} — keys: {}", mount, path, keys))
-                .yellow()
+            style(format!(
+                "[dry-run] Would write to {}/{} — keys: {}",
+                mount, path, keys
+            ))
+            .yellow()
         );
         return Ok(());
     }

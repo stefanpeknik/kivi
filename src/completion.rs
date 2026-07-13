@@ -22,9 +22,7 @@ pub fn complete_vault_path(current: &OsStr) -> Vec<CompletionCandidate> {
         .filter(|s| !s.is_empty())
         .or(cfg.address.clone());
 
-    let token = std::env::var("VAULT_TOKEN")
-        .ok()
-        .filter(|s| !s.is_empty());
+    let token = std::env::var("VAULT_TOKEN").ok().filter(|s| !s.is_empty());
 
     let mount = cfg.mount.clone();
 
@@ -47,9 +45,12 @@ pub fn complete_vault_path(current: &OsStr) -> Vec<CompletionCandidate> {
     let default_path = cfg.default_path.as_deref().filter(|s| !s.is_empty());
 
     let entries = rt.block_on(async {
-        tokio::time::timeout(COMPLETION_TIMEOUT, fetch(partial, &client, &mount, default_path))
-            .await
-            .unwrap_or_default()
+        tokio::time::timeout(
+            COMPLETION_TIMEOUT,
+            fetch(partial, &client, &mount, default_path),
+        )
+        .await
+        .unwrap_or_default()
     });
 
     entries.into_iter().map(CompletionCandidate::new).collect()
@@ -79,6 +80,12 @@ async fn fetch(
 
     keys.into_iter()
         .filter(|k| k.starts_with(prefix))
-        .map(|k| if parent.is_empty() { k } else { format!("{parent}/{k}") })
+        .map(|k| {
+            if parent.is_empty() {
+                k
+            } else {
+                format!("{parent}/{k}")
+            }
+        })
         .collect()
 }

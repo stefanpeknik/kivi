@@ -19,19 +19,16 @@ pub struct EditArgs {
     /// Open editor and show diff but don't write
     #[arg(long)]
     pub dry_run: bool,
-
 }
 
-pub async fn run(args: &EditArgs, client: &VaultClient, mount: &str, path: &str) -> Result<(), KiviError> {
-    match crate::editor::open_editor(
-        client,
-        mount,
-        path,
-        args.no_cas,
-        args.diff,
-        args.dry_run,
-    )
-    .await?
+pub async fn run(
+    args: &EditArgs,
+    client: &VaultClient,
+    mount: &str,
+    path: &str,
+) -> Result<(), KiviError> {
+    match crate::editor::open_editor(client, mount, path, args.no_cas, args.diff, args.dry_run)
+        .await?
     {
         Some(version) => println!("Written: {}/{} (version {})", mount, path, version),
         None => {}

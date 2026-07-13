@@ -1,7 +1,7 @@
 use crate::error::KiviError;
 use crate::vault::client::VaultClient;
 use crate::vault::types::*;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::task::JoinSet;
@@ -43,11 +43,18 @@ pub async fn write(
     cas: Option<u64>,
 ) -> Result<u64, KiviError> {
     let api_path = format!("{}/data/{}", mount, path);
-    let body = KvWriteRequest { data, options: cas.map(|c| KvWriteOptions { cas: c }) };
+    let body = KvWriteRequest {
+        data,
+        options: cas.map(|c| KvWriteOptions { cas: c }),
+    };
     let raw = client.post(&api_path, &body).await.map_err(|e| {
         // Vault returns HTTP 400 with a message containing "check-and-set" on CAS mismatch.
         // This is the only stable signal available; the Vault API has no structured error code.
-        if let KiviError::Api { status: 400, ref message } = e {
+        if let KiviError::Api {
+            status: 400,
+            ref message,
+        } = e
+        {
             if message.contains("check-and-set") || message.contains("CAS") {
                 return KiviError::CasConflict {
                     path: path.to_string(),
@@ -84,7 +91,12 @@ pub async fn delete_versions(
     path: &str,
     versions: &[u64],
 ) -> Result<(), KiviError> {
-    client.post(&format!("{}/delete/{}", mount, path), &json!({ "versions": versions })).await?;
+    client
+        .post(
+            &format!("{}/delete/{}", mount, path),
+            &json!({ "versions": versions }),
+        )
+        .await?;
     Ok(())
 }
 
@@ -94,7 +106,12 @@ pub async fn undelete(
     path: &str,
     versions: &[u64],
 ) -> Result<(), KiviError> {
-    client.post(&format!("{}/undelete/{}", mount, path), &json!({ "versions": versions })).await?;
+    client
+        .post(
+            &format!("{}/undelete/{}", mount, path),
+            &json!({ "versions": versions }),
+        )
+        .await?;
     Ok(())
 }
 
@@ -104,7 +121,12 @@ pub async fn destroy(
     path: &str,
     versions: &[u64],
 ) -> Result<(), KiviError> {
-    client.post(&format!("{}/destroy/{}", mount, path), &json!({ "versions": versions })).await?;
+    client
+        .post(
+            &format!("{}/destroy/{}", mount, path),
+            &json!({ "versions": versions }),
+        )
+        .await?;
     Ok(())
 }
 
@@ -124,7 +146,9 @@ pub async fn write_metadata(
     path: &str,
     opts: Value,
 ) -> Result<(), KiviError> {
-    client.post(&format!("{}/metadata/{}", mount, path), &opts).await?;
+    client
+        .post(&format!("{}/metadata/{}", mount, path), &opts)
+        .await?;
     Ok(())
 }
 
@@ -164,8 +188,7 @@ pub async fn list_recursive(
         }
 
         while let Some(result) = set.join_next().await {
-            let (dir, depth, keys) = result
-                .map_err(|e| KiviError::TaskPanic(e.to_string()))??;
+            let (dir, depth, keys) = result.map_err(|e| KiviError::TaskPanic(e.to_string()))??;
             for key in keys {
                 if key.ends_with('/') {
                     let child = format!(

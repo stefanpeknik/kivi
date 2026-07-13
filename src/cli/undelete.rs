@@ -17,10 +17,14 @@ pub struct UndeleteArgs {
     /// Show what would be restored without acting
     #[arg(long)]
     pub dry_run: bool,
-
 }
 
-pub async fn run(args: &UndeleteArgs, client: &VaultClient, mount: &str, path: &str) -> Result<(), KiviError> {
+pub async fn run(
+    args: &UndeleteArgs,
+    client: &VaultClient,
+    mount: &str,
+    path: &str,
+) -> Result<(), KiviError> {
     if args.dry_run {
         eprintln!(
             "{}",
@@ -33,6 +37,9 @@ pub async fn run(args: &UndeleteArgs, client: &VaultClient, mount: &str, path: &
         return Ok(());
     }
     kv::undelete(client, mount, path, &args.versions).await?;
-    println!("Restored versions {:?} of {}/{}", args.versions, mount, path);
+    println!(
+        "Restored versions {:?} of {}/{}",
+        args.versions, mount, path
+    );
     Ok(())
 }

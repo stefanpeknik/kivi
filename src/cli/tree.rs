@@ -1,7 +1,7 @@
 use crate::cli::OutputArgs;
 use crate::error::KiviError;
 use crate::output::TreeNode;
-use crate::output::{resolve_value_mode, OutputFormat};
+use crate::output::{OutputFormat, resolve_value_mode};
 use crate::vault::client::VaultClient;
 use crate::vault::kv;
 use clap::Args;
@@ -27,7 +27,6 @@ pub struct TreeArgs {
     /// Limit recursion depth
     #[arg(long)]
     pub depth: Option<usize>,
-
 
     #[command(flatten)]
     pub display: OutputArgs,
@@ -94,11 +93,8 @@ async fn build_tree(
                     let dir_name = key.trim_end_matches('/').to_string();
                     child_parts.push(dir_name.clone());
                     if max_depth.map_or(true, |d| depth + 1 <= d) {
-                        let child_vault_path = format!(
-                            "{}/{}",
-                            path.trim_end_matches('/'),
-                            child_parts.join("/")
-                        );
+                        let child_vault_path =
+                            format!("{}/{}", path.trim_end_matches('/'), child_parts.join("/"));
                         queue.push((child_vault_path, child_parts, depth + 1));
                     }
                 } else {

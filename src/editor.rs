@@ -38,7 +38,9 @@ pub async fn open_editor(
             .await?;
 
         if !status.success() {
-            return Err(KiviError::Usage(format!("Editor '{editor}' exited with error")));
+            return Err(KiviError::Usage(format!(
+                "Editor '{editor}' exited with error"
+            )));
         }
 
         let edited = tokio::fs::read_to_string(tmp.path()).await?;
@@ -72,15 +74,19 @@ pub async fn open_editor(
                 use dialoguer::Select;
                 let choice = Select::new()
                     .with_prompt("Secret was modified by someone else. What do you want to do?")
-                    .items(&["Retry (re-fetch and re-edit)", "Force (overwrite anyway)", "Abort"])
+                    .items(&[
+                        "Retry (re-fetch and re-edit)",
+                        "Force (overwrite anyway)",
+                        "Abort",
+                    ])
                     .default(0)
-                    .interact().map_err(|dialoguer::Error::IO(e)| e)?;
+                    .interact()
+                    .map_err(|dialoguer::Error::IO(e)| e)?;
 
                 match choice {
                     0 => continue,
                     1 => {
-                        let edited_data: HashMap<String, Value> =
-                            serde_json::from_str(&edited)?;
+                        let edited_data: HashMap<String, Value> = serde_json::from_str(&edited)?;
                         let v = kv::write(client, mount, path, edited_data, None).await?;
                         return Ok(Some(v));
                     }

@@ -28,7 +28,6 @@ pub struct MetadataShowArgs {
     #[arg(add = clap_complete::engine::ArgValueCompleter::new(crate::completion::complete_vault_path))]
     pub path: Option<String>,
 
-
     #[command(flatten)]
     pub display: OutputArgs,
 }
@@ -49,7 +48,6 @@ pub struct MetadataSetArgs {
 
     #[arg(long)]
     pub dry_run: bool,
-
 }
 
 #[derive(Args, Debug)]
@@ -62,7 +60,6 @@ pub struct MetadataDeleteArgs {
 
     #[arg(long)]
     pub dry_run: bool,
-
 }
 
 pub async fn run(
@@ -83,7 +80,14 @@ pub async fn run(
         MetadataCommand::Set(a) => {
             let path = cfg.resolve_path(a.path.as_deref())?;
             if a.dry_run {
-                eprintln!("{}", console::style(format!("[dry-run] Would update metadata for {}/{}", mount, path)).yellow());
+                eprintln!(
+                    "{}",
+                    console::style(format!(
+                        "[dry-run] Would update metadata for {}/{}",
+                        mount, path
+                    ))
+                    .yellow()
+                );
                 return Ok(());
             }
             let mut opts = serde_json::Map::new();

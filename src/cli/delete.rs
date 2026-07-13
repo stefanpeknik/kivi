@@ -32,10 +32,14 @@ pub struct DeleteArgs {
     /// Show what would be deleted without acting
     #[arg(long)]
     pub dry_run: bool,
-
 }
 
-pub async fn run(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str, path: &str) -> Result<(), KiviError> {
+pub async fn run(
+    args: &DeleteArgs,
+    client: Arc<VaultClient>,
+    mount: &str,
+    path: &str,
+) -> Result<(), KiviError> {
     if args.recursive {
         run_recursive(args, client, mount, path).await
     } else {
@@ -43,17 +47,30 @@ pub async fn run(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str, path:
     }
 }
 
-async fn run_single(args: &DeleteArgs, client: &VaultClient, mount: &str, path: &str) -> Result<(), KiviError> {
+async fn run_single(
+    args: &DeleteArgs,
+    client: &VaultClient,
+    mount: &str,
+    path: &str,
+) -> Result<(), KiviError> {
     if args.dry_run {
-        eprintln!("{}", style(format!("[dry-run] Would delete {}/{}", mount, path)).yellow());
+        eprintln!(
+            "{}",
+            style(format!("[dry-run] Would delete {}/{}", mount, path)).yellow()
+        );
         return Ok(());
     }
     if !args.force {
-        let action = if args.destroy { "permanently destroy" } else { "delete" };
+        let action = if args.destroy {
+            "permanently destroy"
+        } else {
+            "delete"
+        };
         let confirmed = Confirm::new()
             .with_prompt(format!("{} {}/{}?", action, mount, path))
             .default(false)
-            .interact().map_err(|dialoguer::Error::IO(e)| e)?;
+            .interact()
+            .map_err(|dialoguer::Error::IO(e)| e)?;
         if !confirmed {
             println!("Aborted.");
             return Ok(());
@@ -62,9 +79,12 @@ async fn run_single(args: &DeleteArgs, client: &VaultClient, mount: &str, path: 
     if args.destroy {
         if !args.force {
             let confirmed = Confirm::new()
-                .with_prompt("This permanently destroys the secret and CANNOT be undone. Are you sure?")
+                .with_prompt(
+                    "This permanently destroys the secret and CANNOT be undone. Are you sure?",
+                )
                 .default(false)
-                .interact().map_err(|dialoguer::Error::IO(e)| e)?;
+                .interact()
+                .map_err(|dialoguer::Error::IO(e)| e)?;
             if !confirmed {
                 println!("Aborted.");
                 return Ok(());
@@ -74,7 +94,10 @@ async fn run_single(args: &DeleteArgs, client: &VaultClient, mount: &str, path: 
             v.clone()
         } else {
             let meta = kv::read_metadata(client, mount, path).await?;
-            meta.versions.keys().filter_map(|v| v.parse().ok()).collect()
+            meta.versions
+                .keys()
+                .filter_map(|v| v.parse().ok())
+                .collect()
         };
         kv::destroy(client, mount, path, &versions).await?;
         println!("Destroyed: {}/{}", mount, path);
@@ -88,7 +111,12 @@ async fn run_single(args: &DeleteArgs, client: &VaultClient, mount: &str, path: 
     Ok(())
 }
 
-async fn run_recursive(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str, path: &str) -> Result<(), KiviError> {
+async fn run_recursive(
+    args: &DeleteArgs,
+    client: Arc<VaultClient>,
+    mount: &str,
+    path: &str,
+) -> Result<(), KiviError> {
     let leaves = kv::list_recursive(Arc::clone(&client), mount, path, None).await?;
 
     if leaves.is_empty() {
@@ -104,18 +132,26 @@ async fn run_recursive(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str,
     if args.dry_run {
         eprintln!(
             "{}",
-            style(format!("[dry-run] {} secrets listed — no deletions performed.", leaves.len()))
-                .yellow()
+            style(format!(
+                "[dry-run] {} secrets listed — no deletions performed.",
+                leaves.len()
+            ))
+            .yellow()
         );
         return Ok(());
     }
 
     if !args.force {
-        let action = if args.destroy { "permanently destroy" } else { "delete" };
+        let action = if args.destroy {
+            "permanently destroy"
+        } else {
+            "delete"
+        };
         let confirmed = Confirm::new()
             .with_prompt(format!("{} {} secrets?", action, leaves.len()))
             .default(false)
-            .interact().map_err(|dialoguer::Error::IO(e)| e)?;
+            .interact()
+            .map_err(|dialoguer::Error::IO(e)| e)?;
         if !confirmed {
             println!("Aborted.");
             return Ok(());
@@ -148,8 +184,11 @@ async fn run_recursive(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str,
             set.spawn(async move {
                 if destroy {
                     let meta = kv::read_metadata(&client, &mount, &leaf).await?;
-                    let versions: Vec<u64> =
-                        meta.versions.keys().filter_map(|v| v.parse().ok()).collect();
+                    let versions: Vec<u64> = meta
+                        .versions
+                        .keys()
+                        .filter_map(|v| v.parse().ok())
+                        .collect();
                     kv::destroy(&client, &mount, &leaf, &versions).await
                 } else {
                     kv::soft_delete(&client, &mount, &leaf).await
@@ -174,6 +213,9 @@ async fn run_recursive(args: &DeleteArgs, client: Arc<VaultClient>, mount: &str,
         for e in &errors {
             eprintln!("  {}", style(e).red());
         }
-        Err(KiviError::Usage(format!("{} deletion(s) failed", errors.len())))
+        Err(KiviError::Usage(format!(
+            "{} deletion(s) failed",
+            errors.len()
+        )))
     }
 }

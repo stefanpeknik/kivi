@@ -1,6 +1,6 @@
 use crate::cli::OutputArgs;
 use crate::error::KiviError;
-use crate::output::{resolve_value_mode, OutputFormat};
+use crate::output::{OutputFormat, resolve_value_mode};
 use crate::vault::client::VaultClient;
 use crate::vault::kv;
 use clap::Args;
@@ -22,7 +22,6 @@ pub struct GetArgs {
     /// Show only key names, no values
     #[arg(long)]
     pub keys_only: bool,
-
 
     #[command(flatten)]
     pub display: OutputArgs,

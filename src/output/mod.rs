@@ -21,10 +21,7 @@ pub enum ValueMode {
 
 pub const MASK: &str = "****";
 
-pub fn apply_value_mode(
-    data: &HashMap<String, Value>,
-    mode: ValueMode,
-) -> HashMap<String, Value> {
+pub fn apply_value_mode(data: &HashMap<String, Value>, mode: ValueMode) -> HashMap<String, Value> {
     match mode {
         ValueMode::Revealed => data.clone(),
         ValueMode::Masked => data
@@ -117,18 +114,30 @@ mod tests {
 
     #[test]
     fn resolve_value_mode_default_is_masked() {
-        assert!(matches!(resolve_value_mode(false, false), ValueMode::Masked));
+        assert!(matches!(
+            resolve_value_mode(false, false),
+            ValueMode::Masked
+        ));
     }
 
     #[test]
     fn resolve_value_mode_show_values_returns_revealed() {
-        assert!(matches!(resolve_value_mode(true, false), ValueMode::Revealed));
+        assert!(matches!(
+            resolve_value_mode(true, false),
+            ValueMode::Revealed
+        ));
     }
 
     #[test]
     fn resolve_value_mode_keys_only_takes_priority() {
-        assert!(matches!(resolve_value_mode(true, true), ValueMode::KeysOnly));
-        assert!(matches!(resolve_value_mode(false, true), ValueMode::KeysOnly));
+        assert!(matches!(
+            resolve_value_mode(true, true),
+            ValueMode::KeysOnly
+        ));
+        assert!(matches!(
+            resolve_value_mode(false, true),
+            ValueMode::KeysOnly
+        ));
     }
 
     #[test]

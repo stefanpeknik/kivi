@@ -95,11 +95,18 @@ impl VaultClient {
             .await?;
         match resp.status() {
             StatusCode::NO_CONTENT | StatusCode::OK => Ok(()),
-            StatusCode::FORBIDDEN => Err(KiviError::Forbidden { path: path.to_string() }),
-            StatusCode::NOT_FOUND => Err(KiviError::NotFound { path: path.to_string() }),
+            StatusCode::FORBIDDEN => Err(KiviError::Forbidden {
+                path: path.to_string(),
+            }),
+            StatusCode::NOT_FOUND => Err(KiviError::NotFound {
+                path: path.to_string(),
+            }),
             status => {
                 let message = resp.text().await.unwrap_or_default();
-                Err(KiviError::Api { status: status.as_u16(), message })
+                Err(KiviError::Api {
+                    status: status.as_u16(),
+                    message,
+                })
             }
         }
     }
@@ -112,8 +119,12 @@ impl VaultClient {
         match resp.status() {
             StatusCode::OK => Ok(resp.json::<Value>().await?),
             StatusCode::NO_CONTENT => Ok(Value::Null),
-            StatusCode::FORBIDDEN => Err(KiviError::Forbidden { path: path.to_string() }),
-            StatusCode::NOT_FOUND => Err(KiviError::NotFound { path: path.to_string() }),
+            StatusCode::FORBIDDEN => Err(KiviError::Forbidden {
+                path: path.to_string(),
+            }),
+            StatusCode::NOT_FOUND => Err(KiviError::NotFound {
+                path: path.to_string(),
+            }),
             status => {
                 let body: Value = resp.json().await.unwrap_or(Value::Null);
                 let message = body
@@ -123,7 +134,10 @@ impl VaultClient {
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown error")
                     .to_string();
-                Err(KiviError::Api { status: status.as_u16(), message })
+                Err(KiviError::Api {
+                    status: status.as_u16(),
+                    message,
+                })
             }
         }
     }
@@ -136,7 +150,10 @@ mod tests {
     #[test]
     fn url_basic_construction() {
         let client = VaultClient::new("https://vault.example.com", "tok", None);
-        assert_eq!(client.url("secret/data/app"), "https://vault.example.com/v1/secret/data/app");
+        assert_eq!(
+            client.url("secret/data/app"),
+            "https://vault.example.com/v1/secret/data/app"
+        );
     }
 
     #[test]
@@ -151,7 +168,10 @@ mod tests {
     #[test]
     fn new_strips_trailing_slash_from_address() {
         let client = VaultClient::new("https://vault.example.com/", "tok", None);
-        assert_eq!(client.url("secret/data/app"), "https://vault.example.com/v1/secret/data/app");
+        assert_eq!(
+            client.url("secret/data/app"),
+            "https://vault.example.com/v1/secret/data/app"
+        );
     }
 
     #[test]

@@ -2,13 +2,19 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum KiviError {
-    #[error("No Vault token found.\n  export VAULT_TOKEN=$(vault login --method=oidc --field=token)\n  or pass --token")]
+    #[error(
+        "No Vault token found.\n  export VAULT_TOKEN=$(vault login --method=oidc --field=token)\n  or pass --token"
+    )]
     NoToken,
 
-    #[error("No Vault address found. Provide one via:\n  export VAULT_ADDR=https://your-vault:8200\n  or pass --address\n  or run: kivi config set --address <url>")]
+    #[error(
+        "No Vault address found. Provide one via:\n  export VAULT_ADDR=https://your-vault:8200\n  or pass --address\n  or run: kivi config set --address <url>"
+    )]
     NoAddress,
 
-    #[error("No KV mount configured. Provide one via:\n  kivi config set --mount <mount>\n  or pass --mount")]
+    #[error(
+        "No KV mount configured. Provide one via:\n  kivi config set --mount <mount>\n  or pass --mount"
+    )]
     NoMount,
 
     #[error("Permission denied at path: {path}")]
@@ -21,7 +27,9 @@ pub enum KiviError {
     #[error("Vault mount '{mount}' is a KVv1 engine. kivi requires KVv2.")]
     KvV1Engine { mount: String },
 
-    #[error("CAS conflict: secret at '{path}' was modified since last read (expected version {expected})")]
+    #[error(
+        "CAS conflict: secret at '{path}' was modified since last read (expected version {expected})"
+    )]
     CasConflict { path: String, expected: u64 },
 
     #[error("Vault API error ({status}): {message}")]

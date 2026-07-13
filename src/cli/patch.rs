@@ -26,10 +26,14 @@ pub struct PatchArgs {
     /// Show what would happen without writing
     #[arg(long)]
     pub dry_run: bool,
-
 }
 
-pub async fn run(args: &PatchArgs, client: &VaultClient, mount: &str, path: &str) -> Result<(), KiviError> {
+pub async fn run(
+    args: &PatchArgs,
+    client: &VaultClient,
+    mount: &str,
+    path: &str,
+) -> Result<(), KiviError> {
     let mut data = crate::cli::put::parse_kv_args(&args.entries)?;
 
     if args.stdin {
@@ -45,7 +49,10 @@ pub async fn run(args: &PatchArgs, client: &VaultClient, mount: &str, path: &str
     }
 
     if args.dry_run {
-        eprintln!("{}", style(format!("[dry-run] Would patch {}/{}", mount, path)).yellow());
+        eprintln!(
+            "{}",
+            style(format!("[dry-run] Would patch {}/{}", mount, path)).yellow()
+        );
         for (k, v) in &data {
             if v.is_null() {
                 eprintln!("{}", style(format!("[dry-run]   remove {k}")).yellow());

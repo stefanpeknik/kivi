@@ -5,8 +5,8 @@ use crate::vault::client::VaultClient;
 use crate::vault::kv;
 use crate::vault::types::FullMetadataData;
 use clap::Args;
-use console::style;
 use comfy_table::{Attribute, Cell, Color, Table, presets::NOTHING};
+use console::style;
 use std::sync::Arc;
 use tokio::task::JoinSet;
 
@@ -21,7 +21,6 @@ pub struct ListArgs {
     /// Show metadata for each entry (version, created time)
     #[arg(short = 'l', long)]
     pub long: bool,
-
 
     #[command(flatten)]
     pub display: OutputArgs,
@@ -44,8 +43,16 @@ pub async fn run(
     }
 
     // --long: fetch metadata concurrently for leaf secrets only
-    let leaves: Vec<&str> = entries.iter().filter(|e| !e.ends_with('/')).map(|s| s.as_str()).collect();
-    let dirs: Vec<&str> = entries.iter().filter(|e| e.ends_with('/')).map(|s| s.as_str()).collect();
+    let leaves: Vec<&str> = entries
+        .iter()
+        .filter(|e| !e.ends_with('/'))
+        .map(|s| s.as_str())
+        .collect();
+    let dirs: Vec<&str> = entries
+        .iter()
+        .filter(|e| e.ends_with('/'))
+        .map(|s| s.as_str())
+        .collect();
 
     let mut meta_results: Vec<(String, Result<FullMetadataData, KiviError>)> = Vec::new();
     let mut remaining: Vec<String> = leaves.iter().map(|s| s.to_string()).collect();
@@ -90,10 +97,7 @@ fn print_list_human(entries: &[String]) {
     }
 }
 
-fn print_list_long_human(
-    dirs: &[&str],
-    leaves: &[(String, Result<FullMetadataData, KiviError>)],
-) {
+fn print_list_long_human(dirs: &[&str], leaves: &[(String, Result<FullMetadataData, KiviError>)]) {
     let mut table = Table::new();
     table.load_preset(NOTHING);
     table.set_header(vec![
@@ -105,7 +109,9 @@ fn print_list_long_human(
 
     for dir in dirs {
         table.add_row(vec![
-            Cell::new(dir).fg(Color::Blue).add_attribute(Attribute::Bold),
+            Cell::new(dir)
+                .fg(Color::Blue)
+                .add_attribute(Attribute::Bold),
             Cell::new("dir"),
             Cell::new("-"),
             Cell::new("-"),
@@ -126,10 +132,7 @@ fn print_list_long_human(
     println!("{table}");
 }
 
-fn print_list_long_json(
-    dirs: &[&str],
-    leaves: &[(String, Result<FullMetadataData, KiviError>)],
-) {
+fn print_list_long_json(dirs: &[&str], leaves: &[(String, Result<FullMetadataData, KiviError>)]) {
     let mut entries = serde_json::Map::new();
     for dir in dirs {
         entries.insert(dir.to_string(), serde_json::json!({"type": "dir"}));

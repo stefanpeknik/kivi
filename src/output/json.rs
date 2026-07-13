@@ -1,6 +1,6 @@
-use crate::output::{apply_value_mode, TreeNode, ValueMode, MASK};
+use crate::output::{MASK, TreeNode, ValueMode, apply_value_mode};
 use crate::vault::types::{FullMetadataData, KvReadData};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 
 fn to_pretty(val: &Value) -> String {
@@ -9,11 +9,14 @@ fn to_pretty(val: &Value) -> String {
 
 pub fn print_secret(path: &str, secret: &KvReadData, mode: ValueMode) {
     let data = apply_value_mode(&secret.data, mode);
-    println!("{}", to_pretty(&json!({
-        "path": path,
-        "version": secret.metadata.version,
-        "data": data,
-    })));
+    println!(
+        "{}",
+        to_pretty(&json!({
+            "path": path,
+            "version": secret.metadata.version,
+            "data": data,
+        }))
+    );
 }
 
 pub fn print_list(entries: &[String]) {
@@ -25,19 +28,21 @@ pub fn print_tree(node: &TreeNode, mode: ValueMode) {
 }
 
 pub fn print_metadata(path: &str, meta: &FullMetadataData) {
-    println!("{}", to_pretty(&json!({
-        "path": path,
-        "current_version": meta.current_version,
-        "max_versions": meta.max_versions,
-        "cas_required": meta.cas_required,
-        "delete_version_after": meta.delete_version_after,
-        "created_time": meta.created_time,
-        "updated_time": meta.updated_time,
-        "custom_metadata": meta.custom_metadata,
-        "versions": meta.versions,
-    })));
+    println!(
+        "{}",
+        to_pretty(&json!({
+            "path": path,
+            "current_version": meta.current_version,
+            "max_versions": meta.max_versions,
+            "cas_required": meta.cas_required,
+            "delete_version_after": meta.delete_version_after,
+            "created_time": meta.created_time,
+            "updated_time": meta.updated_time,
+            "custom_metadata": meta.custom_metadata,
+            "versions": meta.versions,
+        }))
+    );
 }
-
 
 fn node_to_json(node: &TreeNode, mode: ValueMode) -> Value {
     let mut map = serde_json::Map::new();
@@ -51,8 +56,7 @@ fn node_to_json(node: &TreeNode, mode: ValueMode) -> Value {
                 map.insert(name.clone(), json!(keys));
             }
             ValueMode::Masked => {
-                let masked: HashMap<_, _> =
-                    secret.keys().map(|k| (k.as_str(), MASK)).collect();
+                let masked: HashMap<_, _> = secret.keys().map(|k| (k.as_str(), MASK)).collect();
                 map.insert(name.clone(), json!(masked));
             }
             ValueMode::Revealed => {
@@ -134,4 +138,3 @@ mod tests {
         assert!(json["app"]["db"].is_object());
     }
 }
-

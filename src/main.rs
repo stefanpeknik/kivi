@@ -45,7 +45,11 @@ async fn run() -> Result<(), KiviError> {
 
     let cfg = Config::load()?;
     let (address, token, mount) = resolve_vault(&cli, &cfg)?;
-    let client = Arc::new(VaultClient::new(&address, &token, cli.vault.namespace.as_deref()));
+    let client = Arc::new(VaultClient::new(
+        &address,
+        &token,
+        cli.vault.namespace.as_deref(),
+    ));
     let show_values_global = cfg.show_values;
 
     match &cli.command {

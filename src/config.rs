@@ -153,7 +153,10 @@ mod tests {
         };
         let serialized = toml::to_string_pretty(&c).unwrap();
         let deserialized: Config = toml::from_str(&serialized).unwrap();
-        assert_eq!(deserialized.address.as_deref(), Some("https://vault.example.com"));
+        assert_eq!(
+            deserialized.address.as_deref(),
+            Some("https://vault.example.com")
+        );
         assert_eq!(deserialized.mount.as_deref(), Some("secret"));
         assert_eq!(deserialized.default_path.as_deref(), Some("team/prod"));
         assert!(deserialized.show_values);
