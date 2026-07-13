@@ -145,9 +145,9 @@ fn print_list_long_json(
         };
         entries.insert(name.clone(), val);
     }
+    let val = serde_json::Value::Object(entries);
     println!(
         "{}",
-        serde_json::to_string_pretty(&serde_json::Value::Object(entries))
-            .expect("serialization failed")
+        serde_json::to_string_pretty(&val).unwrap_or_else(|_| format!("{val:?}"))
     );
 }

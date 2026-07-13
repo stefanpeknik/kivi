@@ -11,7 +11,6 @@ pub struct Config {
     pub mount: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_path: Option<String>,
-    pub editor_format: String,
     pub show_values: bool,
 }
 
@@ -21,7 +20,6 @@ impl Default for Config {
             address: None,
             mount: None,
             default_path: None,
-            editor_format: "json".to_string(),
             show_values: false,
         }
     }

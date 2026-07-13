@@ -1,11 +1,16 @@
 use crate::output::{ValueMode, MASK};
 use crate::output::TreeNode;
-use crate::vault::types::{FullMetadataData, SecretData};
+use crate::vault::types::{FullMetadataData, KvReadData};
 use comfy_table::{Attribute, Cell, Color, Table, presets::NOTHING};
 use console::style;
 use ptree::TreeBuilder;
+use serde_json::Value;
 
-pub fn print_secret(path: &str, secret: &SecretData, mode: ValueMode) {
+fn display_value(v: &Value) -> String {
+    v.as_str().map(|s| s.to_string()).unwrap_or_else(|| v.to_string())
+}
+
+pub fn print_secret(path: &str, secret: &KvReadData, mode: ValueMode) {
     println!("{}", style(format!("Path:    {path}")).bold());
     println!("{}", style(format!("Version: {}", secret.metadata.version)).dim());
     println!();
@@ -26,10 +31,7 @@ pub fn print_secret(path: &str, secret: &SecretData, mode: ValueMode) {
     for key in keys {
         let val = match mode {
             ValueMode::Masked => style(MASK).dim().to_string(),
-            ValueMode::Revealed => {
-                let v = &secret.data[key];
-                v.as_str().map(|s| s.to_string()).unwrap_or_else(|| v.to_string())
-            }
+            ValueMode::Revealed => display_value(&secret.data[key]),
             ValueMode::KeysOnly => unreachable!(),
         };
         table.add_row(vec![
@@ -82,10 +84,7 @@ fn add_node_to_builder(builder: &mut TreeBuilder, node: &TreeNode, mode: ValueMo
                 for key in keys {
                     let val = match mode {
                         ValueMode::Masked => style(MASK).dim().to_string(),
-                        ValueMode::Revealed => {
-                            let v = &data[key];
-                            v.as_str().map(|s| s.to_string()).unwrap_or_else(|| v.to_string())
-                        }
+                        ValueMode::Revealed => display_value(&data[key]),
                         ValueMode::KeysOnly => unreachable!(),
                     };
                     builder.add_empty_child(format!("{}: {}", style(key).cyan(), val));
@@ -116,10 +115,7 @@ fn print_node_fallback(node: &TreeNode, mode: ValueMode, prefix: &str) {
                 for key in keys {
                     let val = match mode {
                         ValueMode::Masked => MASK.to_string(),
-                        ValueMode::Revealed => {
-                            let v = &data[key];
-                            v.as_str().map(|s| s.to_string()).unwrap_or_else(|| v.to_string())
-                        }
+                        ValueMode::Revealed => display_value(&data[key]),
                         ValueMode::KeysOnly => unreachable!(),
                     };
                     println!("{prefix}    {key}: {val}");
@@ -136,6 +132,11 @@ pub fn print_metadata(path: &str, meta: &FullMetadataData) {
     println!("CAS required:    {}", meta.cas_required);
     println!("Created:         {}", meta.created_time);
     println!("Updated:         {}", meta.updated_time);
+    if let Some(ref dva) = meta.delete_version_after {
+        if !dva.is_empty() && dva != "0s" {
+            println!("Delete after:    {}", dva);
+        }
+    }
 
     if let Some(ref cm) = meta.custom_metadata {
         if !cm.is_empty() {
@@ -160,7 +161,7 @@ pub fn print_metadata(path: &str, meta: &FullMetadataData) {
         Cell::new("Destroyed").add_attribute(Attribute::Bold),
     ]);
     for (ver, info) in sorted_versions {
-        let deleted = info.deletion_time.as_deref().unwrap_or("-");
+        let deleted = info.deletion_time.as_deref().filter(|s| !s.is_empty()).unwrap_or("-");
         let destroyed = if info.destroyed { style("yes").red().to_string() } else { "-".to_string() };
         table.add_row(vec![
             Cell::new(ver),

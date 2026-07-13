@@ -126,14 +126,14 @@ async fn fetch_secrets(
     collect_leaves(&root, &mut vec![], &mut leaf_paths);
 
     // Process leaves in bounded batches to avoid overwhelming Vault
-    let mut all_results: Vec<(Vec<String>, crate::vault::types::SecretData)> = Vec::new();
+    let mut all_results: Vec<(Vec<String>, crate::vault::types::KvReadData)> = Vec::new();
     let mut remaining = leaf_paths;
 
     while !remaining.is_empty() {
         let n = remaining.len().min(MAX_CONCURRENT);
         let batch: Vec<_> = remaining.drain(..n).collect();
 
-        let mut set: JoinSet<Result<(Vec<String>, crate::vault::types::SecretData), KiviError>> =
+        let mut set: JoinSet<Result<(Vec<String>, crate::vault::types::KvReadData), KiviError>> =
             JoinSet::new();
         for parts in batch {
             let client = Arc::clone(&client);

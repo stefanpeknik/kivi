@@ -2,12 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct SecretData {
-    pub data: HashMap<String, serde_json::Value>,
-    pub metadata: SecretMetadata,
-}
-
-#[derive(Debug, Clone, Deserialize)]
 #[allow(dead_code)]
 pub struct SecretMetadata {
     pub version: u64,
@@ -31,7 +25,7 @@ pub struct KvReadResponse {
     pub data: KvReadData,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct KvReadData {
     pub data: HashMap<String, serde_json::Value>,
     pub metadata: SecretMetadata,
@@ -72,6 +66,7 @@ pub struct FullMetadataData {
     pub cas_required: bool,
     pub created_time: String,
     pub updated_time: String,
+    pub delete_version_after: Option<String>,
     pub custom_metadata: Option<HashMap<String, String>>,
 }
 

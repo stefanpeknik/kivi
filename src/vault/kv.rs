@@ -13,7 +13,7 @@ pub async fn read(
     mount: &str,
     path: &str,
     version: Option<u64>,
-) -> Result<SecretData, KiviError> {
+) -> Result<KvReadData, KiviError> {
     let api_path = if let Some(v) = version {
         format!("{}/data/{}?version={}", mount, path, v)
     } else {
@@ -21,7 +21,7 @@ pub async fn read(
     };
     let raw = client.get(&api_path).await?;
     let resp: KvReadResponse = serde_json::from_value(raw)?;
-    Ok(SecretData { data: resp.data.data, metadata: resp.data.metadata })
+    Ok(resp.data)
 }
 
 pub async fn list_keys(

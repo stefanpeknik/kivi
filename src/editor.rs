@@ -3,7 +3,7 @@ use crate::vault::client::VaultClient;
 use crate::vault::kv;
 use console::style;
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 pub async fn open_editor(
     client: &VaultClient,
@@ -15,8 +15,11 @@ pub async fn open_editor(
 ) -> Result<Option<u64>, KiviError> {
     loop {
         let secret = kv::read(client, mount, path, None).await?;
-        let original_json = serde_json::to_string_pretty(&secret.data)?;
         let version = secret.metadata.version;
+
+        // BTreeMap for deterministic key order in the temp file
+        let sorted: BTreeMap<_, _> = secret.data.iter().collect();
+        let original_json = serde_json::to_string_pretty(&sorted)?;
 
         let tmp = tempfile::Builder::new()
             .prefix("kivi-edit-")
@@ -40,13 +43,13 @@ pub async fn open_editor(
 
         let edited = tokio::fs::read_to_string(tmp.path()).await?;
 
-        if edited.trim() == original_json.trim() {
+        let new_data: HashMap<String, Value> = serde_json::from_str(&edited)
+            .map_err(|e| KiviError::Usage(format!("Invalid JSON after editing: {e}")))?;
+
+        if new_data == secret.data {
             println!("No changes.");
             return Ok(None);
         }
-
-        let new_data: HashMap<String, Value> = serde_json::from_str(&edited)
-            .map_err(|e| KiviError::Usage(format!("Invalid JSON after editing: {e}")))?;
 
         if show_diff || dry_run {
             print_diff(&secret.data, &new_data);
