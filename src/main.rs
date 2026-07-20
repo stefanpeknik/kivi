@@ -44,6 +44,18 @@ async fn run() -> Result<(), KiviError> {
     }
 
     let cfg = Config::load()?;
+
+    if let Commands::Login(args) = &cli.command {
+        let address = cli
+            .vault
+            .address
+            .as_deref()
+            .filter(|s| !s.is_empty())
+            .or(cfg.address.as_deref())
+            .ok_or(KiviError::NoAddress)?
+            .to_string();
+        return cli::login::run(args, &address, &cfg).await;
+    }
     let (address, token, mount) = resolve_vault(&cli, &cfg)?;
     let client = Arc::new(VaultClient::new(
         &address,
@@ -90,7 +102,7 @@ async fn run() -> Result<(), KiviError> {
             cli::undelete::run(args, &client, &mount, &path).await?
         }
         Commands::Metadata(args) => cli::metadata::run(args, &client, &mount, &cfg).await?,
-        Commands::Config(_) => unreachable!(),
+        Commands::Config(_) | Commands::Login(_) => unreachable!(),
     }
 
     Ok(())
@@ -112,6 +124,7 @@ fn resolve_vault(cli: &Cli, cfg: &Config) -> Result<(String, String, String), Ki
         .as_deref()
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
+        .or_else(vault::token::read_token_file)
         .ok_or(KiviError::NoToken)?;
 
     let mount = cli

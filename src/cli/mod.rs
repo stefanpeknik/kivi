@@ -4,6 +4,7 @@ pub mod diff;
 pub mod edit;
 pub mod get;
 pub mod list;
+pub mod login;
 pub mod metadata;
 pub mod patch;
 pub mod put;
@@ -84,4 +85,6 @@ pub enum Commands {
     Metadata(metadata::MetadataArgs),
     /// Manage persistent CLI configuration
     Config(config::ConfigArgs),
+    /// Authenticate via OIDC and store the token
+    Login(login::LoginArgs),
 }

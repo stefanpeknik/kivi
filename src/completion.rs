@@ -22,7 +22,10 @@ pub fn complete_vault_path(current: &OsStr) -> Vec<CompletionCandidate> {
         .filter(|s| !s.is_empty())
         .or(cfg.address.clone());
 
-    let token = std::env::var("VAULT_TOKEN").ok().filter(|s| !s.is_empty());
+    let token = std::env::var("VAULT_TOKEN")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .or_else(crate::vault::token::read_token_file);
 
     let mount = cfg.mount.clone();
 

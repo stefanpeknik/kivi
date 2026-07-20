@@ -3,7 +3,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum KiviError {
     #[error(
-        "No Vault token found.\n  export VAULT_TOKEN=$(vault login --method=oidc --field=token)\n  or pass --token"
+        "No Vault token found.\n  Run: kivi login\n  or:  export VAULT_TOKEN=<token>\n  or:  pass --token"
     )]
     NoToken,
 
@@ -46,6 +46,9 @@ pub enum KiviError {
 
     #[error("{0}")]
     Usage(String),
+
+    #[error("OIDC login failed: {0}")]
+    OidcLogin(String),
 
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),

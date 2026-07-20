@@ -12,6 +12,8 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_path: Option<String>,
     pub show_values: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oidc_mount: Option<String>,
 }
 
 impl Config {
@@ -139,6 +141,7 @@ mod tests {
             mount: Some("secret".into()),
             default_path: Some("team/prod".into()),
             show_values: true,
+            oidc_mount: Some("jwt".into()),
         };
         let serialized = toml::to_string_pretty(&c).unwrap();
         let deserialized: Config = toml::from_str(&serialized).unwrap();

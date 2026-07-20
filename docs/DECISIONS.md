@@ -280,3 +280,30 @@ Values are masked as `"****"` by default in **both** formats. `--show-values` re
 - `tree` on a deep hierarchy with many secrets is the primary case: concurrent fan-out turns O(depth × breadth × latency) into O(depth × latency).
 - Bounded concurrency (16) prevents overwhelming Vault or triggering rate limits.
 - `tokio::task::JoinSet` gives clean cancellation and error propagation across concurrent tasks.
+
+---
+
+## D017 — Auth: OIDC login + token file fallback chain
+
+**Date:** 2026-07-14
+**Status:** Accepted (supersedes D005)
+
+**Context:** D005 limited auth to VAULT_TOKEN env var only. Users authenticate via OIDC daily and must run `vault login --method=oidc --field=token` externally, then export the result. This adds friction and requires the `vault` CLI to be installed.
+
+**Decision:** Add `kivi login` for native OIDC authentication and a token resolution fallback chain: `--token` flag > `VAULT_TOKEN` env > `~/.vault-token` file.
+
+**Token resolution chain (highest to lowest):**
+1. `--token` CLI flag
+2. `VAULT_TOKEN` environment variable
+3. `~/.vault-token` file (read, trimmed)
+4. Error with instructions
+
+**OIDC flow:** kivi implements the Vault OIDC auth flow natively (no vault CLI dependency): request auth URL from Vault, open browser, listen for localhost callback on port 8250, exchange callback params for token, write token to `~/.vault-token`.
+
+**Config:** `oidc_mount` field in config.toml for non-standard OIDC mount paths (default: `oidc`).
+
+**Rationale:**
+- Eliminates dependency on the vault CLI binary for authentication.
+- `~/.vault-token` is the standard Vault convention; other Vault-aware tools recognize it.
+- The fallback chain follows the same precedence pattern as address (flag > env > config/file).
+- The callback server is minimal (one TCP connection, parse one HTTP request line, 120s timeout).

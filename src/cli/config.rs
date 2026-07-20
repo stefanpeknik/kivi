@@ -38,6 +38,10 @@ pub struct ConfigSetArgs {
     /// Show secret values by default instead of masking
     #[arg(long)]
     pub show_values: Option<bool>,
+
+    /// OIDC auth method mount path in Vault
+    #[arg(long)]
+    pub oidc_mount: Option<String>,
 }
 
 #[derive(Args, Debug)]
@@ -53,6 +57,10 @@ pub struct ConfigUnsetArgs {
     /// Remove default path prefix
     #[arg(long)]
     pub default_path: bool,
+
+    /// Remove OIDC auth method mount path
+    #[arg(long)]
+    pub oidc_mount: bool,
 }
 
 pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
@@ -68,9 +76,10 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
                 && a.mount.is_none()
                 && a.default_path.is_none()
                 && a.show_values.is_none()
+                && a.oidc_mount.is_none()
             {
                 return Err(KiviError::Usage(
-                    "No values provided. Use --address, --mount, --default-path, or --show-values."
+                    "No values provided. Use --address, --mount, --default-path, --show-values, or --oidc-mount."
                         .to_string(),
                 ));
             }
@@ -88,13 +97,17 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
             if let Some(v) = a.show_values {
                 config.show_values = v;
             }
+            if let Some(ref v) = a.oidc_mount {
+                config.oidc_mount = to_opt(v);
+            }
             config.save()?;
             println!("Config updated: {}", Config::path().display());
         }
         ConfigCommand::Unset(a) => {
-            if !a.address && !a.mount && !a.default_path {
+            if !a.address && !a.mount && !a.default_path && !a.oidc_mount {
                 return Err(KiviError::Usage(
-                    "No values specified. Use --address, --mount, or --default-path.".to_string(),
+                    "No values specified. Use --address, --mount, --default-path, or --oidc-mount."
+                        .to_string(),
                 ));
             }
             let mut config = Config::load()?;
@@ -106,6 +119,9 @@ pub fn run(args: &ConfigArgs) -> Result<(), KiviError> {
             }
             if a.default_path {
                 config.default_path = None;
+            }
+            if a.oidc_mount {
+                config.oidc_mount = None;
             }
             config.save()?;
             println!("Config updated: {}", Config::path().display());
