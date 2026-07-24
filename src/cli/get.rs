@@ -77,10 +77,7 @@ fn print_deleted_human(path: &str, meta: &FullMetadataData) {
         .and_then(|v| v.deletion_time.as_deref())
         .filter(|s| !s.is_empty())
         .unwrap_or("-");
-    let destroyed = meta
-        .versions
-        .get(&ver)
-        .is_some_and(|v| v.destroyed);
+    let destroyed = meta.versions.get(&ver).is_some_and(|v| v.destroyed);
 
     println!("{}", style(format!("Path:    {path}")).bold());
     if destroyed {
