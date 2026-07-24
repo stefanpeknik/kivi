@@ -122,18 +122,14 @@ fn resolve_vault(cli: &Cli, cfg: &Config) -> Result<(String, String, String), Ki
         .to_string();
     tracing::debug!(address, "resolved vault address");
 
-    let (token, token_source) = if let Some(t) = cli
-        .vault
-        .token
-        .as_deref()
-        .filter(|s| !s.is_empty())
-    {
-        (t.to_string(), "flag/env")
-    } else if let Some(t) = vault::token::read_token_file() {
-        (t, "~/.vault-token")
-    } else {
-        return Err(KiviError::NoToken);
-    };
+    let (token, token_source) =
+        if let Some(t) = cli.vault.token.as_deref().filter(|s| !s.is_empty()) {
+            (t.to_string(), "flag/env")
+        } else if let Some(t) = vault::token::read_token_file() {
+            (t, "~/.vault-token")
+        } else {
+            return Err(KiviError::NoToken);
+        };
     tracing::debug!(source = token_source, "resolved token");
 
     let mount = cli

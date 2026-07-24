@@ -1,9 +1,9 @@
 use crate::error::KiviError;
-use tracing::debug;
 use reqwest::{Client, Method, StatusCode};
 use serde::Serialize;
 use serde_json::Value;
 use std::time::Duration;
+use tracing::debug;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
