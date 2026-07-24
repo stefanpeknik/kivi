@@ -26,8 +26,12 @@ pub struct DeleteArgs {
     pub versions: Option<Vec<u64>>,
 
     /// Permanently destroy versions (cannot be undeleted)
-    #[arg(long)]
+    #[arg(long, conflicts_with = "purge")]
     pub destroy: bool,
+
+    /// Remove the secret entirely — all versions and metadata
+    #[arg(long, conflicts_with_all = ["destroy", "versions"])]
+    pub purge: bool,
 
     /// Show what would be deleted without acting
     #[arg(long)]
@@ -60,12 +64,15 @@ async fn run_single(
         );
         return Ok(());
     }
+    let action = if args.purge {
+        "purge"
+    } else if args.destroy {
+        "permanently destroy"
+    } else {
+        "delete"
+    };
+
     if !args.force {
-        let action = if args.destroy {
-            "permanently destroy"
-        } else {
-            "delete"
-        };
         let confirmed = Confirm::new()
             .with_prompt(format!("{} {}/{}?", action, mount, path))
             .default(false)
@@ -76,7 +83,23 @@ async fn run_single(
             return Ok(());
         }
     }
-    if args.destroy {
+    if args.purge {
+        if !args.force {
+            let confirmed = Confirm::new()
+                .with_prompt(
+                    "This removes ALL versions and metadata and CANNOT be undone. Are you sure?",
+                )
+                .default(false)
+                .interact()
+                .map_err(|dialoguer::Error::IO(e)| e)?;
+            if !confirmed {
+                println!("Aborted.");
+                return Ok(());
+            }
+        }
+        kv::delete_metadata(client, mount, path).await?;
+        println!("Purged: {}/{}", mount, path);
+    } else if args.destroy {
         if !args.force {
             let confirmed = Confirm::new()
                 .with_prompt(
@@ -141,12 +164,15 @@ async fn run_recursive(
         return Ok(());
     }
 
+    let action = if args.purge {
+        "purge"
+    } else if args.destroy {
+        "permanently destroy"
+    } else {
+        "delete"
+    };
+
     if !args.force {
-        let action = if args.destroy {
-            "permanently destroy"
-        } else {
-            "delete"
-        };
         let confirmed = Confirm::new()
             .with_prompt(format!("{} {} secrets?", action, leaves.len()))
             .default(false)
@@ -156,11 +182,17 @@ async fn run_recursive(
             println!("Aborted.");
             return Ok(());
         }
-        if args.destroy {
+        if args.destroy || args.purge {
+            let msg = if args.purge {
+                "This PERMANENTLY REMOVES all versions and metadata and CANNOT be undone. Are you absolutely sure?"
+            } else {
+                "This PERMANENTLY DESTROYS all versions and CANNOT be undone. Are you absolutely sure?"
+            };
             let confirmed = Confirm::new()
-                .with_prompt("This PERMANENTLY DESTROYS all versions and CANNOT be undone. Are you absolutely sure?")
+                .with_prompt(msg)
                 .default(false)
-                .interact().map_err(|dialoguer::Error::IO(e)| e)?;
+                .interact()
+                .map_err(|dialoguer::Error::IO(e)| e)?;
             if !confirmed {
                 println!("Aborted.");
                 return Ok(());
@@ -177,12 +209,15 @@ async fn run_recursive(
         let batch: Vec<_> = remaining.drain(..n).collect();
         let mut set: JoinSet<Result<(), KiviError>> = JoinSet::new();
 
+        let purge = args.purge;
+        let destroy = args.destroy;
         for leaf in batch {
             let client = Arc::clone(&client);
             let mount = mount.to_string();
-            let destroy = args.destroy;
             set.spawn(async move {
-                if destroy {
+                if purge {
+                    kv::delete_metadata(&client, &mount, &leaf).await
+                } else if destroy {
                     let meta = kv::read_metadata(&client, &mount, &leaf).await?;
                     let versions: Vec<u64> = meta
                         .versions
