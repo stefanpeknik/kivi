@@ -120,7 +120,7 @@ fn resolve_vault(cli: &Cli, cfg: &Config) -> Result<(String, String, String), Ki
         .or(cfg.address.as_deref())
         .ok_or(KiviError::NoAddress)?
         .to_string();
-    log::debug!("vault address: {address}");
+    tracing::debug!(address, "resolved vault address");
 
     let (token, token_source) = if let Some(t) = cli
         .vault
@@ -134,7 +134,7 @@ fn resolve_vault(cli: &Cli, cfg: &Config) -> Result<(String, String, String), Ki
     } else {
         return Err(KiviError::NoToken);
     };
-    log::debug!("token source: {token_source}");
+    tracing::debug!(source = token_source, "resolved token");
 
     let mount = cli
         .vault
@@ -145,7 +145,7 @@ fn resolve_vault(cli: &Cli, cfg: &Config) -> Result<(String, String, String), Ki
         .ok_or(KiviError::NoMount)?
         .trim_end_matches('/')
         .to_string();
-    log::debug!("mount: {mount}");
+    tracing::debug!(mount, "resolved mount");
 
     Ok((address, token, mount))
 }

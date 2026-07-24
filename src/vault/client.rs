@@ -1,5 +1,5 @@
 use crate::error::KiviError;
-use log::debug;
+use tracing::debug;
 use reqwest::{Client, Method, StatusCode};
 use serde::Serialize;
 use serde_json::Value;
@@ -42,71 +42,61 @@ impl VaultClient {
     }
 
     pub async fn get(&self, path: &str) -> Result<Value, KiviError> {
-        let url = self.url(path);
-        debug!("GET {url}");
         let resp = self
             .client
-            .get(&url)
+            .get(self.url(path))
             .header("X-Vault-Token", &self.token)
             .send()
             .await?;
-        debug!("GET {path} -> {}", resp.status());
+        debug!(method = "GET", path, status = resp.status().as_u16());
         self.handle_response(resp, path).await
     }
 
     pub async fn list(&self, path: &str) -> Result<Value, KiviError> {
-        let url = self.url(path);
-        debug!("LIST {url}");
         let resp = self
             .client
-            .request(Method::from_bytes(b"LIST").unwrap(), &url)
+            .request(Method::from_bytes(b"LIST").unwrap(), self.url(path))
             .header("X-Vault-Token", &self.token)
             .send()
             .await?;
-        debug!("LIST {path} -> {}", resp.status());
+        debug!(method = "LIST", path, status = resp.status().as_u16());
         self.handle_response(resp, path).await
     }
 
     pub async fn post(&self, path: &str, body: &impl Serialize) -> Result<Value, KiviError> {
-        let url = self.url(path);
-        debug!("POST {url}");
         let resp = self
             .client
-            .post(&url)
+            .post(self.url(path))
             .header("X-Vault-Token", &self.token)
             .json(body)
             .send()
             .await?;
-        debug!("POST {path} -> {}", resp.status());
+        debug!(method = "POST", path, status = resp.status().as_u16());
         self.handle_response(resp, path).await
     }
 
     pub async fn patch(&self, path: &str, body: &impl Serialize) -> Result<Value, KiviError> {
-        let url = self.url(path);
-        debug!("PATCH {url}");
         let json_bytes = serde_json::to_vec(body)?;
         let resp = self
             .client
-            .patch(&url)
+            .patch(self.url(path))
             .header("X-Vault-Token", &self.token)
             .header("Content-Type", "application/merge-patch+json")
             .body(json_bytes)
             .send()
             .await?;
-        debug!("PATCH {path} -> {}", resp.status());
+        debug!(method = "PATCH", path, status = resp.status().as_u16());
         self.handle_response(resp, path).await
     }
 
     pub async fn delete(&self, path: &str) -> Result<(), KiviError> {
-        let url = self.url(path);
-        debug!("DELETE {url}");
         let resp = self
             .client
-            .delete(&url)
+            .delete(self.url(path))
             .header("X-Vault-Token", &self.token)
             .send()
             .await?;
-        debug!("DELETE {path} -> {}", resp.status());
+        debug!(method = "DELETE", path, status = resp.status().as_u16());
         match resp.status() {
             StatusCode::NO_CONTENT | StatusCode::OK => Ok(()),
             StatusCode::FORBIDDEN => Err(KiviError::Forbidden {
