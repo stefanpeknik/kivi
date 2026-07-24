@@ -28,6 +28,10 @@ pub struct TreeArgs {
     #[arg(long)]
     pub depth: Option<usize>,
 
+    /// Include soft-deleted secrets in output
+    #[arg(long)]
+    pub deleted: bool,
+
     #[command(flatten)]
     pub display: OutputArgs,
 }
@@ -43,11 +47,12 @@ pub async fn run(
     let mode = resolve_value_mode(show, args.keys_only);
 
     let root = build_tree(Arc::clone(&client), mount, path, args.depth).await?;
-    let root = if args.keys_only {
+    let mut root = if args.keys_only {
         root
     } else {
-        fetch_secrets(Arc::clone(&client), mount, root, path).await?
+        fetch_secrets(Arc::clone(&client), mount, root, path, args.deleted).await?
     };
+    root.prune_empty();
 
     match args.display.output {
         OutputFormat::Human => crate::output::human::print_tree(path, &root, mode),
@@ -113,47 +118,63 @@ async fn build_tree(
     Ok(root)
 }
 
+enum FetchResult {
+    Live(crate::vault::types::KvReadData),
+    NotFound,
+}
+
 async fn fetch_secrets(
     client: Arc<VaultClient>,
     mount: &str,
     mut root: TreeNode,
     base_path: &str,
+    include_deleted: bool,
 ) -> Result<TreeNode, KiviError> {
     let mut leaf_paths: Vec<Vec<String>> = Vec::new();
     collect_leaves(&root, &mut vec![], &mut leaf_paths);
 
-    // Process leaves in bounded batches to avoid overwhelming Vault
-    let mut all_results: Vec<(Vec<String>, crate::vault::types::KvReadData)> = Vec::new();
+    let mut all_results: Vec<(Vec<String>, FetchResult)> = Vec::new();
     let mut remaining = leaf_paths;
 
     while !remaining.is_empty() {
         let n = remaining.len().min(MAX_CONCURRENT);
         let batch: Vec<_> = remaining.drain(..n).collect();
 
-        let mut set: JoinSet<Result<(Vec<String>, crate::vault::types::KvReadData), KiviError>> =
-            JoinSet::new();
+        let mut set: JoinSet<Result<(Vec<String>, FetchResult), KiviError>> = JoinSet::new();
         for parts in batch {
             let client = Arc::clone(&client);
             let mount = mount.to_string();
             let base = base_path.trim_end_matches('/').to_string();
             set.spawn(async move {
                 let vault_path = format!("{}/{}", base, parts.join("/"));
-                let secret = kv::read(&client, &mount, &vault_path, None).await?;
-                Ok((parts, secret))
+                match kv::read(&client, &mount, &vault_path, None).await {
+                    Ok(secret) => Ok((parts, FetchResult::Live(secret))),
+                    Err(KiviError::NotFound { .. }) => Ok((parts, FetchResult::NotFound)),
+                    Err(e) => Err(e),
+                }
             });
         }
 
         while let Some(res) = set.join_next().await {
-            let (parts, secret) = res.map_err(|e| KiviError::TaskPanic(e.to_string()))??;
-            all_results.push((parts, secret));
+            let result = res.map_err(|e| KiviError::TaskPanic(e.to_string()))??;
+            all_results.push(result);
         }
     }
 
-    for (parts, secret) in all_results {
-        root.insert_path(
-            &parts.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
-            Some(secret.data),
-        );
+    for (parts, result) in all_results {
+        let refs: Vec<&str> = parts.iter().map(|s| s.as_str()).collect();
+        match result {
+            FetchResult::Live(secret) => {
+                root.insert_path(&refs, Some(secret.data));
+            }
+            FetchResult::NotFound => {
+                if include_deleted {
+                    root.insert_deleted(&refs);
+                } else {
+                    root.remove_secret(&refs);
+                }
+            }
+        }
     }
 
     Ok(root)

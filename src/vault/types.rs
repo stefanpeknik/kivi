@@ -70,6 +70,15 @@ pub struct FullMetadataData {
     pub custom_metadata: Option<HashMap<String, String>>,
 }
 
+impl FullMetadataData {
+    pub fn is_current_version_deleted(&self) -> bool {
+        let key = self.current_version.to_string();
+        self.versions.get(&key).is_some_and(|v| {
+            v.destroyed || v.deletion_time.as_deref().is_some_and(|t| !t.is_empty())
+        })
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct VersionInfo {
     pub created_time: String,

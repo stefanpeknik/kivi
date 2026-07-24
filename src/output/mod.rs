@@ -3,7 +3,7 @@ pub mod json;
 
 use clap::ValueEnum;
 use serde_json::Value;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default)]
 pub enum OutputFormat {
@@ -46,6 +46,7 @@ pub fn resolve_value_mode(show_values: bool, keys_only: bool) -> ValueMode {
 pub struct TreeNode {
     pub children: BTreeMap<String, TreeNode>,
     pub secrets: BTreeMap<String, HashMap<String, Value>>,
+    pub deleted_secrets: BTreeSet<String>,
 }
 
 impl TreeNode {
@@ -65,6 +66,45 @@ impl TreeNode {
         }
         let child = self.children.entry(parts[0].to_string()).or_default();
         child.insert_path(&parts[1..], data);
+    }
+
+    pub fn remove_secret(&mut self, parts: &[&str]) {
+        if parts.is_empty() {
+            return;
+        }
+        if parts.len() == 1 {
+            self.secrets.remove(parts[0]);
+            return;
+        }
+        if let Some(child) = self.children.get_mut(parts[0]) {
+            child.remove_secret(&parts[1..]);
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.secrets.is_empty()
+            && self.deleted_secrets.is_empty()
+            && self.children.values().all(|c| c.is_empty())
+    }
+
+    pub fn prune_empty(&mut self) {
+        for child in self.children.values_mut() {
+            child.prune_empty();
+        }
+        self.children.retain(|_, c| !c.is_empty());
+    }
+
+    pub fn insert_deleted(&mut self, parts: &[&str]) {
+        if parts.is_empty() {
+            return;
+        }
+        if parts.len() == 1 {
+            self.secrets.remove(parts[0]);
+            self.deleted_secrets.insert(parts[0].to_string());
+            return;
+        }
+        let child = self.children.entry(parts[0].to_string()).or_default();
+        child.insert_deleted(&parts[1..]);
     }
 }
 

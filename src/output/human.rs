@@ -97,6 +97,10 @@ fn add_node_to_builder(builder: &mut TreeBuilder, node: &TreeNode, mode: ValueMo
             }
         }
     }
+
+    for name in &node.deleted_secrets {
+        builder.add_empty_child(style(format!("{name} [deleted]")).dim().to_string());
+    }
 }
 
 fn print_tree_fallback(root_path: &str, node: &TreeNode, mode: ValueMode) {
@@ -126,6 +130,9 @@ fn print_node_fallback(node: &TreeNode, mode: ValueMode, prefix: &str) {
                 }
             }
         }
+    }
+    for name in &node.deleted_secrets {
+        println!("{prefix}  {name} [deleted]");
     }
 }
 

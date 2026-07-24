@@ -64,6 +64,9 @@ fn node_to_json(node: &TreeNode, mode: ValueMode) -> Value {
             }
         }
     }
+    for name in &node.deleted_secrets {
+        map.insert(name.clone(), json!({"deleted": true}));
+    }
     Value::Object(map)
 }
 
