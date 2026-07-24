@@ -10,9 +10,9 @@ pub struct UndeleteArgs {
     #[arg(add = clap_complete::engine::ArgValueCompleter::new(crate::completion::complete_vault_path))]
     pub path: Option<String>,
 
-    /// Versions to restore (comma-separated)
-    #[arg(long, required = true, value_delimiter = ',')]
-    pub versions: Vec<u64>,
+    /// Versions to restore (comma-separated, defaults to current version)
+    #[arg(long, value_delimiter = ',')]
+    pub versions: Option<Vec<u64>>,
 
     /// Show what would be restored without acting
     #[arg(long)]
@@ -25,21 +25,26 @@ pub async fn run(
     mount: &str,
     path: &str,
 ) -> Result<(), KiviError> {
+    let versions = match &args.versions {
+        Some(v) => v.clone(),
+        None => {
+            let meta = kv::read_metadata(client, mount, path).await?;
+            vec![meta.current_version]
+        }
+    };
+
     if args.dry_run {
         eprintln!(
             "{}",
             style(format!(
                 "[dry-run] Would restore versions {:?} of {}/{}",
-                args.versions, mount, path
+                versions, mount, path
             ))
             .yellow()
         );
         return Ok(());
     }
-    kv::undelete(client, mount, path, &args.versions).await?;
-    println!(
-        "Restored versions {:?} of {}/{}",
-        args.versions, mount, path
-    );
+    kv::undelete(client, mount, path, &versions).await?;
+    println!("Restored versions {:?} of {}/{}", versions, mount, path);
     Ok(())
 }
