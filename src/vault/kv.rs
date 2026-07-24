@@ -176,19 +176,26 @@ pub async fn list_recursive(
         let n = queue.len().min(MAX_CONCURRENT);
         let batch: Vec<_> = queue.drain(..n).collect();
 
-        type ListResult = Result<(String, usize, Vec<String>), KiviError>;
+        type ListResult = Result<(String, usize, Option<Vec<String>>), KiviError>;
         let mut set: JoinSet<ListResult> = JoinSet::new();
         for (dir, depth) in batch {
             let client = Arc::clone(&client);
             let mount = mount.to_string();
             set.spawn(async move {
-                let keys = list_keys(&client, &mount, &dir).await?;
-                Ok((dir, depth, keys))
+                match list_keys(&client, &mount, &dir).await {
+                    Ok(keys) => Ok((dir, depth, Some(keys))),
+                    Err(KiviError::NotFound { .. }) => Ok((dir, depth, None)),
+                    Err(e) => Err(e),
+                }
             });
         }
 
         while let Some(result) = set.join_next().await {
             let (dir, depth, keys) = result.map_err(|e| KiviError::TaskPanic(e.to_string()))??;
+            let Some(keys) = keys else {
+                leaves.push(dir);
+                continue;
+            };
             for key in keys {
                 if key.ends_with('/') {
                     let child = format!(
