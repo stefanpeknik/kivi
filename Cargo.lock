@@ -774,6 +774,7 @@ dependencies = [
  "console",
  "dialoguer",
  "dirs",
+ "log",
  "open",
  "ptree",
  "reqwest",

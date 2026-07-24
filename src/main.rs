@@ -3,6 +3,7 @@ mod completion;
 mod config;
 mod editor;
 mod error;
+mod logger;
 mod output;
 mod vault;
 
@@ -38,6 +39,8 @@ async fn run() -> Result<(), KiviError> {
     if cli.no_color {
         console::set_colors_enabled(false);
     }
+
+    logger::init(cli.verbose);
 
     if let Commands::Config(args) = &cli.command {
         return cli::config::run(args);
@@ -117,15 +120,21 @@ fn resolve_vault(cli: &Cli, cfg: &Config) -> Result<(String, String, String), Ki
         .or(cfg.address.as_deref())
         .ok_or(KiviError::NoAddress)?
         .to_string();
+    log::debug!("vault address: {address}");
 
-    let token = cli
+    let (token, token_source) = if let Some(t) = cli
         .vault
         .token
         .as_deref()
         .filter(|s| !s.is_empty())
-        .map(|s| s.to_string())
-        .or_else(vault::token::read_token_file)
-        .ok_or(KiviError::NoToken)?;
+    {
+        (t.to_string(), "flag/env")
+    } else if let Some(t) = vault::token::read_token_file() {
+        (t, "~/.vault-token")
+    } else {
+        return Err(KiviError::NoToken);
+    };
+    log::debug!("token source: {token_source}");
 
     let mount = cli
         .vault
@@ -136,6 +145,7 @@ fn resolve_vault(cli: &Cli, cfg: &Config) -> Result<(String, String, String), Ki
         .ok_or(KiviError::NoMount)?
         .trim_end_matches('/')
         .to_string();
+    log::debug!("mount: {mount}");
 
     Ok((address, token, mount))
 }

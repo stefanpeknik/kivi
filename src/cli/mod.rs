@@ -54,6 +54,10 @@ pub struct Cli {
     #[arg(long)]
     pub no_color: bool,
 
+    /// Show debug output including Vault API calls
+    #[arg(long, short = 'v', global = true)]
+    pub verbose: bool,
+
     #[command(subcommand)]
     pub command: Commands,
 }

@@ -72,7 +72,9 @@ pub async fn oidc_login(
         role: role.map(str::to_string),
     };
 
+    log::debug!("oidc: POST {auth_url_endpoint}");
     let resp = client.post(&auth_url_endpoint).json(&body).send().await?;
+    log::debug!("oidc: auth_url -> {}", resp.status());
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();
@@ -91,6 +93,7 @@ pub async fn oidc_login(
         .ok_or_else(|| KiviError::OidcLogin("No 'nonce' found in auth URL from Vault".into()))?;
 
     // Step 2: start callback listener before opening browser
+    log::debug!("oidc: binding callback listener on 127.0.0.1:{port}");
     let listener = TcpListener::bind(format!("127.0.0.1:{port}"))
         .await
         .map_err(|e| {
@@ -115,11 +118,13 @@ pub async fn oidc_login(
         oidc_mount,
     );
 
+    log::debug!("oidc: GET {callback_endpoint}");
     let resp = client
         .get(&callback_endpoint)
         .query(&[("state", &state), ("code", &code), ("nonce", &nonce)])
         .send()
         .await?;
+    log::debug!("oidc: callback -> {}", resp.status());
 
     if !resp.status().is_success() {
         let status = resp.status().as_u16();
